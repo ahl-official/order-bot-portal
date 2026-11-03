@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AHL Central Order Management & Edit Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1e40af;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --radius: 10px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding: 16px; font-size: 14px; }
+    .container { max-width: 1240px; margin: 0 auto; }
+
+    /* Modern Top Header */
+    header {
+      background: linear-gradient(135deg, #09132c 0%, #172b68 50%, #1e3a8a 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-logo {
+      background: white;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 18px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      letter-spacing: 1.5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .brand-title h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-title p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+    /* Right-Hand Header Actions with Menu Dropdown */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .btn-refresh {
+      background: #0284c7;
+      color: #ffffff !important;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-refresh:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+    }
+
+    .menu-container {
+      position: relative;
+    }
+
+    .btn-menu {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(6px);
+      white-space: nowrap;
+    }
+    .btn-menu:hover, .btn-menu.open {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .menu-arrow {
+      font-size: 10px;
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+    .btn-menu.open .menu-arrow {
+      transform: rotate(180deg);
+    }
+
+    /* Floating Dropdown Card */
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 16px 32px -4px rgba(15, 23, 42, 0.2), 0 4px 8px -2px rgba(15, 23, 42, 0.08);
+      min-width: 270px;
+      z-index: 1000;
+      padding: 6px;
+      animation: menuSlideDown 0.15s ease-out;
+    }
+    .menu-dropdown.show {
+      display: block;
+    }
+
+    @keyframes menuSlideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      color: var(--text-main);
+      user-select: none;
+    }
+    .menu-item:hover {
+      background: #f1f5f9;
+    }
+    .menu-item.active {
+      background: #eff6ff;
+      color: var(--primary);
+      border-left: 3px solid var(--accent);
+    }
+    .menu-item-icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .menu-item-text h4 {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .menu-item-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: normal;
+    }
+    .menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #15803d; }
+    .btn-warning { background: #f59e0b; color: #1e293b; font-weight: 700; }
+    .btn-warning:hover { background: #d97706; }
+    .btn-outline { background: white; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+
+    /* KPI Summary Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .kpi-blue { background: #e0f2fe; color: #0284c7; }
+    .kpi-purple { background: #f3e8ff; color: #9333ea; }
+    .kpi-green { background: #dcfce7; color: #16a34a; }
+    .kpi-amber { background: #fef3c7; color: #d97706; }
+    .kpi-data h3 { font-size: 22px; font-weight: 800; color: var(--text-main); line-height: 1.1; }
+    .kpi-data p { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+
+    /* Filter Bar */
+    .filter-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .filter-panel input, .filter-panel select {
+      padding: 9px 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      background: white;
+    }
+    .filter-panel input { flex: 1; min-width: 240px; }
+    .filter-panel input:focus, .filter-panel select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+    .filter-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Master Table */
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .table-container {
+      overflow-x: auto;
+      max-height: 640px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    thead th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.15s;
+    }
+    tbody tr:hover { background-color: #f8fafc; }
+    tbody td {
+      padding: 12px 14px;
+      vertical-align: middle;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .badge-crr { background: #ede9fe; color: #6d28d9; }
+    .badge-nbd { background: #dbeafe; color: #1d4ed8; }
+    .badge-paid { background: #dcfce7; color: #15803d; }
+    .badge-pending { background: #fef3c7; color: #b45309; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+
+    .client-clickable {
+      color: var(--primary);
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .client-clickable:hover { color: var(--accent); }
+
+    /* Pagination Bar */
+    .pagination-bar {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      background: #fafafa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* View Containers */
+    .app-view { display: none; }
+    .app-view.active { display: block; }
+
+    /* Order Editor Header Banner */
+    .editor-top-bar {
+      background: #eff6ff;
+      border-left: 5px solid var(--accent);
+      padding: 14px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .order-badge-lg {
+      background: #1e3a8a;
+      color: white;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    /* Form Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+      padding-bottom: 2px;
+    }
+    .tab-btn {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: #ffffff;
+      border-radius: 6px 6px 0 0;
+    }
+
+    /* Tab Content Cards */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .form-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 14px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 14px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-weight: 600; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+      color: var(--text-main);
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+
+    /* Sticky Footer Action Bar */
+    .action-bar {
+      position: sticky;
+      bottom: 16px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      color: white;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+    .modal-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    .modal-box-lg {
+      max-width: 900px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-box h3 { margin-bottom: 12px; color: var(--primary); font-size: 18px; }
+    .modal-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border-left-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      body { padding: 8px; }
+      header { flex-direction: row; justify-content: space-between; }
+      .brand-title h1 { font-size: 16px; }
+      .brand-title p { display: none; }
+      .action-bar { flex-direction: column; align-items: stretch; }
+      .filter-panel { flex-direction: column; align-items: stretch; }
+      .filter-panel input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Executive Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-logo">AHL</div>
+        <div class="brand-title">
+          <h1>AHL Central Order Portal</h1>
+          <p>American Hairline • Order Management, Edit & CRR Hub</p>
+        </div>
+      </div>
+
+      <!-- Right-Hand Header Actions with Menu Dropdown -->
+      <div class="header-actions">
+        <button class="btn-refresh" onclick="refreshCurrentView()" title="Refresh data from Google Sheets">
+          🔄 Refresh
+        </button>
+
+        <div class="menu-container">
+          <button class="btn-menu" id="menuToggleBtn" onclick="toggleNavMenu(event)" title="Toggle navigation menu">
+            <span id="menuIcon">☰</span>
+            <span id="menuCurrentLabel">All Orders</span>
+            <span class="menu-arrow">▾</span>
+          </button>
+
+          <div class="menu-dropdown" id="navDropdown">
+            <div class="menu-item active" id="menu-item-dashboard" onclick="selectViewAndClose('dashboard')">
+              <span class="menu-item-icon">📋</span>
+              <div class="menu-item-text">
+                <h4>All Orders (Dashboard)</h4>
+                <p>Browse & filter all 837+ forms</p>
+              </div>
+            </div>
+
+            <div class="menu-item" id="menu-item-editor" onclick="selectViewAndClose('editor')">
+              <span class="menu-item-icon">✏️</span>
+              <div class="menu-item-text">
+                <h4>Order Review & Edit</h4>
+                <p>Inspect specs & update order</p>
+              </div>
+            </div>
+
+            <div class="menu-item" id="menu-item-history" onclick="selectViewAndClose('history')">
+              <span class="menu-item-icon">📜</span>
+              <div class="menu-item-text">
+                <h4>Change History Log</h4>
+                <p>Audit trail & modifications</p>
+              </div>
+            </div>
+
+            <div class="menu-divider"></div>
+
+            <div class="menu-item" onclick="openPhoneFinderModal()">
+              <span class="menu-item-icon">📞</span>
+              <div class="menu-item-text">
+                <h4>Client History by Phone</h4>
+                <p>Lookup past repeat client orders</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= VIEW 1: MASTER ORDERS DASHBOARD ================= -->
+    <div id="view-dashboard" class="app-view active">
+      <!-- KPI Stats -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-blue">📦</div>
+          <div class="kpi-data">
+            <h3 id="statTotalOrders">-</h3>
+            <p>Total Filled Orders</p>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-purple">🔄</div>
+          <div class="kpi-data">
+            <h3 id="statCrrOrders">-</h3>
+            <p>Repeat Clients (CRR)</p>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-green">🆕</div>
+          <div class="kpi-data">
+            <h3 id="statNbdOrders">-</h3>
+            <p>New Clients (NBD)</p>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon kpi-amber">⚠️</div>
+          <div class="kpi-data">
+            <h3 id="statPendingBal">-</h3>
+            <p>Balance Due Orders</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters & Instant Search -->
+      <div class="filter-panel">
+        <input type="text" id="dashSearch" placeholder="🔍 Search by Order ID, Client Name, or Mobile..." oninput="handleSearchInput()">
+        <select id="dashBranch" onchange="applyFilters()">
+          <option value="all">🏢 All Branches</option>
+          <option value="mumbai">Mumbai</option>
+          <option value="delhi">Delhi</option>
+          <option value="bangalore">Bangalore</option>
+          <option value="hyderabad">Hyderabad</option>
+          <option value="kolkata">Kolkata</option>
+          <option value="chennai">Chennai</option>
+          <option value="pune">Pune</option>
+          <option value="ahmedabad">Ahmedabad</option>
+        </select>
+        <select id="dashWearer" onchange="applyFilters()">
+          <option value="all">👥 All Clients</option>
+          <option value="crr">Repeat (CRR)</option>
+          <option value="nbd">New Client (NBD)</option>
+        </select>
+        <select id="dashPayment" onchange="applyFilters()">
+          <option value="all">💳 All Payments</option>
+          <option value="pending">Balance Pending</option>
+          <option value="paid">Fully Paid</option>
+        </select>
+        <div class="filter-meta" id="dashFilterCount">Loading orders...</div>
+      </div>
+
+      <!-- Orders Master Table -->
+      <div class="table-card">
+        <div class="table-container">
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Client Details</th>
+                <th>Branch</th>
+                <th>Financials (Total / Adv / Bal)</th>
+                <th>Specs (Size / Base / Hair)</th>
+                <th>Drive PDF</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center; padding: 40px; color: var(--text-muted);">
+                  <div class="spinner"></div>
+                  <div style="margin-top:10px;">Loading orders from Google Sheets...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-bar">
+          <div>
+            <span id="pageInfoText" style="color: var(--text-muted); font-size: 13px;">Showing 1-25</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline btn-sm" id="btnPrevPage" onclick="changePage(-1)">← Previous</button>
+            <button class="btn btn-outline btn-sm" id="btnNextPage" onclick="changePage(1)">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: ORDER REVIEW & EDIT ================= -->
+    <div id="view-editor" class="app-view">
+      <!-- Active Order Banner -->
+      <div class="editor-top-bar">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" onclick="switchView('dashboard')">← Back to Orders</button>
+          <span class="order-badge-lg" id="bannerOrderNumber">AHL-XXXX</span>
+          <span id="bannerClientName" style="font-weight: 700; font-size: 15px;">No Order Selected</span>
+          <span id="bannerBranch" style="color: var(--text-muted); font-weight: 600;"></span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <div id="drivePdfLinkWrapper" style="display:none;">
+            <a id="drivePdfLink" href="#" target="_blank" class="btn btn-outline btn-sm">📄 View Drive PDF</a>
+          </div>
+          <button type="button" class="btn btn-warning btn-sm" onclick="cloneAsRepeatOrder()">🔁 Create Repeat (CRR)</button>
+        </div>
+      </div>
+
+      <!-- Quick Finder Bar inside Editor -->
+      <div class="search-panel" style="background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:12px 18px; margin-bottom:18px; display:flex; gap:10px;">
+        <input type="text" id="editorSearchInput" placeholder="Jump to Order ID (e.g. AHL-9913) or 10-digit Phone..." style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px;">
+        <button class="btn btn-primary btn-sm" onclick="lookupOrderFromEditor()">🔍 Load Order</button>
+      </div>
+
+      <!-- 6-Section Tabs -->
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchFormTab('tab-client')">👤 1. Client & Branch</button>
+        <button class="tab-btn" onclick="switchFormTab('tab-consult')">💬 2. Consultation</button>
+        <button class="tab-btn" onclick="switchFormTab('tab-payment')">💳 3. Payment</button>
+        <button class="tab-btn" onclick="switchFormTab('tab-spec')">📐 4. Client Spec</button>
+        <button class="tab-btn" onclick="switchFormTab('tab-tech')">✂️ 5. Tech Spec</button>
+        <button class="tab-btn" onclick="switchFormTab('tab-media')">📸 6. Media Documentation</button>
+      </div>
+
+      <form id="orderForm" onsubmit="event.preventDefault(); promptPinToSave();">
+        <input type="hidden" id="orderNumber" name="orderNumber">
+
+        <!-- ================= SECTION 1: CLIENT DETAILS ================= -->
+        <div id="tab-client" class="tab-content active">
+          <div class="form-card">
+            <div class="card-title">👤 Section 1: Client & Branch Details</div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Client Full Name *</label>
+                <input type="text" id="clientName" name="clientName" required>
+              </div>
+              <div class="form-group">
+                <label>Contact Mobile (10 Digits) *</label>
+                <input type="tel" id="contactNo" name="contactNo" pattern="[0-9]{10}" required>
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" id="city" name="city">
+              </div>
+              <div class="form-group">
+                <label>Branch</label>
+                <select id="branch" name="branch">
+                  <option value="Mumbai">Mumbai</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Bangalore">Bangalore</option>
+                  <option value="Hyderabad">Hyderabad</option>
+                  <option value="Kolkata">Kolkata</option>
+                  <option value="Chennai">Chennai</option>
+                  <option value="Pune">Pune</option>
+                  <option value="Ahmedabad">Ahmedabad</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Order Date (DD/MM/YYYY)</label>
+                <input type="text" id="orderDate" name="orderDate" placeholder="DD/MM/YYYY">
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Consultation By</label>
+                <input type="text" id="consultationBy" name="consultationBy">
+              </div>
+              <div class="form-group">
+                <label>Technician Name</label>
+                <input type="text" id="technicianName" name="technicianName">
+              </div>
+              <div class="form-group">
+                <label>Demo Given By</label>
+                <input type="text" id="demoGivenBy" name="demoGivenBy">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Existing Wearer</label>
+                <select id="existingWearer" name="existingWearer">
+                  <option value="NBD">NBD (New Booking / First Time Wearer)</option>
+                  <option value="CRR">CRR (Repeat Client)</option>
+                  <option value="Repeat CRR">Repeat CRR</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Client Status</label>
+                <select id="clientStatus" name="clientStatus">
+                  <option value="REGULAR">REGULAR</option>
+                  <option value="VIP">VIP</option>
+                  <option value="VVIP">VVIP</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Special Notes</label>
+              <textarea id="specialNotes" name="specialNotes" placeholder="Type notes or None"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 2: CONSULTATION ================= -->
+        <div id="tab-consult" class="tab-content">
+          <div class="form-card">
+            <div class="card-title">💬 Section 2: Consultation Details</div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Client Preference</label>
+                <select id="clientPreference" name="clientPreference">
+                  <option value="Stick On">Stick On</option>
+                  <option value="Clip On">Clip On</option>
+                  <option value="Clip+Frtape">Clip + Frtape</option>
+                  <option value="Tape On">Tape On</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Consult Density</label>
+                <select id="consultDensity" name="consultDensity">
+                  <option value="Regular">Regular</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Hairline (Consultant)</label>
+                <select id="consultHairline" name="consultHairline">
+                  <option value="Covered">Covered</option>
+                  <option value="Brush Back">Brush Back</option>
+                  <option value="Exposed">Exposed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Hairstyle</label>
+                <input type="text" id="hairstyle" name="hairstyle" placeholder="e.g. Freestyle, Side Partition">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Base (Consultant)</label>
+                <input type="text" id="consultBase" name="consultBase" placeholder="e.g. Jadalace, Air-Lase, Full Lace">
+              </div>
+              <div class="form-group">
+                <label>System Life Expected</label>
+                <input type="text" id="life" name="life" placeholder="e.g. 3 months, 6 months">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Consultant Notes (Notes 1)</label>
+              <textarea id="notes1" name="notes1" placeholder="Type notes or None"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 3: PAYMENT ================= -->
+        <div id="tab-payment" class="tab-content">
+          <div class="form-card">
+            <div class="card-title">💳 Section 3: Payment & Accounting</div>
+            <div class="grid-4">
+              <div class="form-group">
+                <label>Total Bill Amount (₹) *</label>
+                <input type="number" id="totalBillAmount" name="totalBillAmount" oninput="calculateBalance()" required>
+              </div>
+              <div class="form-group">
+                <label>Advance Paid (₹) *</label>
+                <input type="number" id="advancePaid" name="advancePaid" oninput="calculateBalance()" required>
+              </div>
+              <div class="form-group">
+                <label>Balance Payable (₹)</label>
+                <input type="number" id="balancePayable" name="balancePayable" readonly style="background:#f1f5f9; font-weight:700;">
+              </div>
+              <div class="form-group">
+                <label>Number of Units</label>
+                <input type="number" id="noOfUnits" name="noOfUnits" min="1" max="20" value="1" oninput="calculateBalance()">
+              </div>
+            </div>
+
+            <!-- Dynamic Warning for Min Advance -->
+            <div id="advanceAlert" class="alert alert-warning" style="display:none; background:#fffbeb; color:#92400e; border:1px solid #fde68a; padding:12px; border-radius:6px; margin-bottom:14px;">
+              ⚠️ Note: Advance Paid is below the recommended minimum of ₹5,000 per unit.
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Payment Done By</label>
+                <select id="paymentDoneBy" name="paymentDoneBy">
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
+                  <option value="Card">Card</option>
+                  <option value="Online Transfer">Online Transfer (NEFT / NetBanking)</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Rush Order Charges (₹)</label>
+                <input type="number" id="rushOrderCharges" name="rushOrderCharges" value="0">
+              </div>
+              <div class="form-group">
+                <label>Changes in Payment</label>
+                <select id="changesInPayment" name="changesInPayment">
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>GST %</label>
+                <select id="gstPercentage" name="gstPercentage" onchange="autoCalculateGst()">
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="12">12%</option>
+                  <option value="18">18%</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>GST Amount Charged (₹)</label>
+                <input type="number" id="gstAmountCharged" name="gstAmountCharged" value="0">
+              </div>
+              <div class="form-group">
+                <label>Delivery Date (DD/MM/YYYY)</label>
+                <input type="text" id="deliveryDate" name="deliveryDate" placeholder="DD/MM/YYYY">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Payment Notes (Notes 2)</label>
+              <textarea id="notes2" name="notes2" placeholder="Type notes or None"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 4: CLIENT SPECIFICATION ================= -->
+        <div id="tab-spec" class="tab-content">
+          <div class="form-card">
+            <div class="card-title">📐 Section 4: Client Specifications</div>
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Size (e.g. 8x6, 6.8x8.5) *</label>
+                <input type="text" id="size" name="size" placeholder="8x6 or custom" required>
+              </div>
+              <div class="form-group">
+                <label>Base Type</label>
+                <input type="text" id="baseType" name="baseType" placeholder="e.g. Jadalace, Air-Lase">
+              </div>
+              <div class="form-group">
+                <label>Code</label>
+                <select id="code" name="code">
+                  <option value="NAN">NAN</option>
+                  <option value="H.N">H.N</option>
+                  <option value="B/M">B/M</option>
+                  <option value="KRANTI">KRANTI</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Colour</label>
+                <input type="text" id="colour" name="colour" placeholder="e.g. Black, Natural Black">
+              </div>
+              <div class="form-group">
+                <label>Target Colour</label>
+                <input type="text" id="targetColour" name="targetColour" placeholder="e.g. Black, Dark Brown">
+              </div>
+              <div class="form-group">
+                <label>Grey %</label>
+                <select id="grey" name="grey">
+                  <option value="None">None</option>
+                  <option value="10">10%</option>
+                  <option value="20">20%</option>
+                  <option value="30">30%</option>
+                  <option value="40">40%</option>
+                  <option value="50">50%</option>
+                  <option value="60">60%</option>
+                  <option value="65">65%</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Work Type</label>
+                <select id="workType" name="workType">
+                  <option value="REGULAR (NO EXTRA)">REGULAR (NO EXTRA)</option>
+                  <option value="LOCAL CUSTOM (6,000/-)">LOCAL CUSTOM (6,000/-)</option>
+                  <option value="SEMI CUSTOM (10,000/-)">SEMI CUSTOM (10,000/-)</option>
+                  <option value="CUSTOM (15,000/-)">CUSTOM (15,000/-)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Bleach Knots</label>
+                <select id="blechKnots" name="blechKnots">
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Type of Density (Base Lace)</label>
+                <select id="typeOfDensity" name="typeOfDensity">
+                  <option value="Full Lace">Full Lace</option>
+                  <option value="Air Lace">Air Lace</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>To Do Afterwork</label>
+              <input type="text" id="toDoAfterwork" name="toDoAfterwork" placeholder="e.g. 1, 3 (1. Natural Hairline, 3. Bleach Knots)">
+            </div>
+
+            <div class="form-group">
+              <label>Client Spec Notes (Notes 3)</label>
+              <textarea id="notes3" name="notes3" placeholder="Type notes or None"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 5: TECHNICIAN SPECIFICATION ================= -->
+        <div id="tab-tech" class="tab-content">
+          <div class="form-card">
+            <div class="card-title">✂️ Section 5: Technician Specifications & Measurements</div>
+            <div style="font-weight:700; margin-bottom:8px; color:var(--text-muted);">INCHES MEASUREMENTS:</div>
+            <div class="grid-4">
+              <div class="form-group">
+                <label>Top (inches)</label>
+                <input type="number" step="0.1" id="top" name="top" placeholder="e.g. 4">
+              </div>
+              <div class="form-group">
+                <label>Front (inches)</label>
+                <input type="number" step="0.1" id="front" name="front" placeholder="e.g. 4">
+              </div>
+              <div class="form-group">
+                <label>Side (inches)</label>
+                <input type="number" step="0.1" id="side" name="side" placeholder="e.g. 3">
+              </div>
+              <div class="form-group">
+                <label>Back (inches)</label>
+                <input type="number" step="0.1" id="back" name="back" placeholder="e.g. 3">
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Technician Density</label>
+                <select id="density" name="density">
+                  <option value="Regular">Regular</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Hair Length</label>
+                <select id="hairLength" name="hairLength">
+                  <option value="Short">Short</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Long">Long</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Parting</label>
+                <select id="parting" name="parting">
+                  <option value="Freestyle">Freestyle</option>
+                  <option value="Left">Left</option>
+                  <option value="Right">Right</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Hairline Shape</label>
+                <select id="hairlineShape" name="hairlineShape">
+                  <option value="Exact">Exact</option>
+                  <option value="Cut As Per Mould">Cut As Per Mould</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Hairline Shaped</label>
+                <select id="hairlineShaped" name="hairlineShaped">
+                  <option value="U-Shape">U-Shape</option>
+                  <option value="V-Shape">V-Shape</option>
+                  <option value="M-Shape">M-Shape</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Type of Client</label>
+                <select id="typeOfClient" name="typeOfClient">
+                  <option value="Not Fussy">Not Fussy</option>
+                  <option value="Fussy">Fussy</option>
+                  <option value="Very Fussy">Very Fussy</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Client Hairline Description</label>
+                <input type="text" id="clientHairline" name="clientHairline" placeholder="e.g. Receding, M-Shape">
+              </div>
+              <div class="form-group">
+                <label>Base Hairline Description</label>
+                <input type="text" id="baseHairline" name="baseHairline" placeholder="e.g. Natural Skin Base, Lace">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Client Order Like</label>
+                <select id="clientOrderLike" name="clientOrderLike">
+                  <option value="None">None (NBD / First Time)</option>
+                  <option value="Like Order 1">Like Order 1</option>
+                  <option value="Like Order 2">Like Order 2</option>
+                  <option value="Same as Last One">Same as Last One</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>As Per Date (DD/MM/YYYY)</label>
+                <input type="text" id="asPerDate" name="asPerDate" placeholder="DD/MM/YYYY">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Technician Notes (Notes 4)</label>
+              <textarea id="notes4" name="notes4" placeholder="Type notes or None"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SECTION 6: MEDIA DOCUMENTATION ================= -->
+        <div id="tab-media" class="tab-content">
+          <div class="form-card">
+            <div class="card-title">📸 Section 6: Photos & Media Documentation</div>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">
+              Google Drive links and non-capture reasons recorded by staff:
+            </p>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Front Photo Link</label>
+                <input type="url" id="photoFrontUrl" name="photoFrontUrl" placeholder="https://drive.google.com/...">
+              </div>
+              <div class="form-group">
+                <label>Top Photo Link</label>
+                <input type="url" id="photoTopUrl" name="photoTopUrl" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="form-group">
+                <label>Left Side Photo</label>
+                <input type="url" id="photoLeftUrl" name="photoLeftUrl">
+              </div>
+              <div class="form-group">
+                <label>Right Side Photo</label>
+                <input type="url" id="photoRightUrl" name="photoRightUrl">
+              </div>
+              <div class="form-group">
+                <label>Back Photo</label>
+                <input type="url" id="photoBackUrl" name="photoBackUrl">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Consultation Video Link</label>
+                <input type="url" id="videoUrl" name="videoUrl">
+              </div>
+              <div class="form-group">
+                <label>Mould Photo Link</label>
+                <input type="url" id="mouldPhotoUrl" name="mouldPhotoUrl">
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:16px;">
+              <div class="form-group">
+                <label>Photo Not Taken Reason</label>
+                <input type="text" id="picTakenReason" name="picTakenReason" placeholder="e.g. Client Refused">
+              </div>
+              <div class="form-group">
+                <label>Video Not Taken Reason</label>
+                <input type="text" id="videoTakenReason" name="videoTakenReason" placeholder="e.g. Client Refused">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Action Bar for Editor -->
+        <div class="action-bar">
+          <div>
+            <span style="font-size:12px; opacity:0.8;">Status:</span>
+            <strong id="saveStatusIndicator" style="margin-left:6px; color:#86efac;">Ready</strong>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-warning" onclick="cloneAsRepeatOrder()">🔁 Create Repeat (CRR)</button>
+            <button type="submit" class="btn btn-success">💾 Save Changes (PIN Required)</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- ================= VIEW 3: AUDIT & CHANGE HISTORY LOG ================= -->
+    <div id="view-history" class="app-view">
+      <div class="table-card">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="font-size:16px; font-weight:700; color:var(--primary);">📜 Order Modifications & Change Logs</h2>
+            <p style="font-size:12px; color:var(--text-muted);">Synchronized audit trail from CRR New Order Changes Log</p>
+          </div>
+          <input type="text" id="historySearch" placeholder="Filter audit logs..." oninput="filterHistoryTable()" style="padding:7px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; width:220px;">
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Order #</th>
+                <th>Client Name & Contact</th>
+                <th>Branch</th>
+                <th>Wearer</th>
+                <th>Bill / Advance</th>
+                <th>Change Summary & Remarks</th>
+                <th>Drive PDF</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">
+                  <div class="spinner"></div>
+                  <div style="margin-top:8px;">Loading audit logs...</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Staff PIN Security Modal -->
+  <div class="modal-backdrop" id="pinModal">
+    <div class="modal-box">
+      <h3>🔒 Staff Authentication</h3>
+      <p>Enter your 4-digit Staff PIN to authorize updating Google Sheets, Drive PDF & WhatsApp alerts:</p>
+      <div class="form-group" style="margin-bottom:16px;">
+        <input type="password" id="staffPinInput" maxlength="4" placeholder="••••" style="font-size:24px; text-align:center; letter-spacing:10px; font-weight:800;">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Your Name / Role (for Audit Trail):</label>
+        <input type="text" id="editorNameInput" value="Roshani" placeholder="e.g. Roshani / Saniya">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-outline" onclick="closePinModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="confirmSaveWithPin()">Authorize & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client History Modal -->
+  <div class="modal-backdrop" id="clientHistoryModal">
+    <div class="modal-box modal-box-lg">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <div>
+          <h3 id="clientModalTitle" style="margin-bottom:2px;">Client Order History</h3>
+          <p id="clientModalPhone" style="margin-bottom:0; font-size:12px;"></p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="closeClientModal()">✕ Close</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Date</th>
+              <th>Branch</th>
+              <th>Total Bill</th>
+              <th>Specs (Size / Base / Density)</th>
+              <th>PDF</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="clientHistoryTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Engine -->
+  <script>
+    // State
+    let allOrders = [];
+    let filteredOrders = [];
+    let allHistory = [];
+    let currentPage = 1;
+    const pageSize = 25;
+    let currentView = 'dashboard';
+
+    const VIEW_LABELS = {
+      'dashboard': 'All Orders',
+      'editor': 'Order Review & Edit',
+      'history': 'Change History'
+    };
+
+    // Right-Hand Menu Dropdown Logic
+    function toggleNavMenu(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('navDropdown');
+      const btn = document.getElementById('menuToggleBtn');
+      const isOpen = dropdown.classList.contains('show');
+      if (isOpen) {
+        closeNavMenu();
+      } else {
+        dropdown.classList.add('show');
+        btn.classList.add('open');
+      }
+    }
+
+    function closeNavMenu() {
+      const dropdown = document.getElementById('navDropdown');
+      const btn = document.getElementById('menuToggleBtn');
+      if (dropdown) dropdown.classList.remove('show');
+      if (btn) btn.classList.remove('open');
+    }
+
+    function selectViewAndClose(viewName) {
+      switchView(viewName);
+      closeNavMenu();
+    }
+
+    // Close menu when clicking anywhere outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('navDropdown');
+      const btn = document.getElementById('menuToggleBtn');
+      if (dropdown && dropdown.classList.contains('show')) {
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+          closeNavMenu();
+        }
+      }
+    });
+
+    function openPhoneFinderModal() {
+      closeNavMenu();
+      const phone = prompt('Enter 10-digit mobile number to search client order history:');
+      if (phone) {
+        const clean = phone.replace(/\D/g, '').slice(-10);
+        if (clean.length === 10) {
+          openClientHistory(clean, 'Search Result');
+        } else {
+          alert('Please enter a valid 10-digit mobile number.');
+        }
+      }
+    }
+
+    // View Switching
+    function switchView(viewName) {
+      currentView = viewName;
+      document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+
+      const targetView = document.getElementById(`view-${viewName}`);
+      const targetMenuItem = document.getElementById(`menu-item-${viewName}`);
+      if (targetView) targetView.classList.add('active');
+      if (targetMenuItem) targetMenuItem.classList.add('active');
+
+      const labelEl = document.getElementById('menuCurrentLabel');
+      if (labelEl && VIEW_LABELS[viewName]) {
+        labelEl.innerText = VIEW_LABELS[viewName];
+      }
+
+      if (viewName === 'history' && allHistory.length === 0) {
+        loadHistory();
+      }
+    }
+
+    function switchFormTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('#view-editor .tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Refresh Active View
+    function refreshCurrentView() {
+      if (currentView === 'dashboard') {
+        loadAllOrders(true);
+      } else if (currentView === 'history') {
+        loadHistory(true);
+      } else if (currentView === 'editor') {
+        const id = document.getElementById('orderNumber').value;
+        if (id) lookupOrder(id);
+      }
+    }
+
+    // Load All Orders for Dashboard
+    async function loadAllOrders(forceRefresh = false) {
+      document.getElementById('dashFilterCount').innerText = 'Refreshing orders...';
+      try {
+        const res = await fetch(`/api/orders${forceRefresh ? '?forceRefresh=true' : ''}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          allOrders = data.orders;
+          calculateStats();
+          applyFilters();
+        } else {
+          document.getElementById('dashFilterCount').innerText = 'Failed to load';
+        }
+      } catch (err) {
+        console.error('Error loading orders:', err);
+        document.getElementById('dashFilterCount').innerText = 'Error loading';
+      }
+    }
+
+    // Calculate Summary Stats
+    function calculateStats() {
+      const total = allOrders.length;
+      let crr = 0, nbd = 0, pending = 0;
+
+      allOrders.forEach(o => {
+        const w = (o.existingWearer || '').toLowerCase();
+        if (w.includes('crr') || w.includes('repeat')) crr++;
+        else nbd++;
+
+        const bal = parseFloat(o.balancePayable) || 0;
+        if (bal > 0) pending++;
+      });
+
+      document.getElementById('statTotalOrders').innerText = total.toLocaleString('en-IN');
+      document.getElementById('statCrrOrders').innerText = crr.toLocaleString('en-IN');
+      document.getElementById('statNbdOrders').innerText = nbd.toLocaleString('en-IN');
+      document.getElementById('statPendingBal').innerText = pending.toLocaleString('en-IN');
+    }
+
+    // Live Instant Search & Filters
+    let searchTimeout = null;
+    function handleSearchInput() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(applyFilters, 180);
+    }
+
+    function applyFilters() {
+      const search = (document.getElementById('dashSearch').value || '').trim().toLowerCase();
+      const branch = document.getElementById('dashBranch').value;
+      const wearer = document.getElementById('dashWearer').value;
+      const payment = document.getElementById('dashPayment').value;
+
+      filteredOrders = allOrders.filter(o => {
+        // Search filter
+        if (search) {
+          const matchId = (o.orderNumber || '').toLowerCase().includes(search);
+          const matchClient = (o.clientName || '').toLowerCase().includes(search);
+          const matchPhone = (o.contactNo || '').includes(search);
+          if (!matchId && !matchClient && !matchPhone) return false;
+        }
+
+        // Branch filter
+        if (branch !== 'all') {
+          if (!(o.branch || '').toLowerCase().includes(branch)) return false;
+        }
+
+        // Wearer filter
+        if (wearer !== 'all') {
+          const w = (o.existingWearer || '').toLowerCase();
+          if (wearer === 'crr' && !(w.includes('crr') || w.includes('repeat'))) return false;
+          if (wearer === 'nbd' && (w.includes('crr') || w.includes('repeat'))) return false;
+        }
+
+        // Payment status filter
+        if (payment !== 'all') {
+          const bal = parseFloat(o.balancePayable) || 0;
+          if (payment === 'pending' && bal <= 0) return false;
+          if (payment === 'paid' && bal > 0) return false;
+        }
+
+        return true;
+      });
+
+      currentPage = 1;
+      renderTable();
+    }
+
+    // Render Table Page
+    function renderTable() {
+      const tbody = document.getElementById('ordersTableBody');
+      const total = filteredOrders.length;
+      document.getElementById('dashFilterCount').innerText = `Showing ${total} of ${allOrders.length} Orders`;
+
+      if (total === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No matching orders found.</td></tr>`;
+        document.getElementById('pageInfoText').innerText = '0 - 0 of 0';
+        return;
+      }
+
+      const totalPages = Math.ceil(total / pageSize);
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * pageSize;
+      const end = Math.min(start + pageSize, total);
+      const pageData = filteredOrders.slice(start, end);
+
+      tbody.innerHTML = pageData.map(o => {
+        const isCrr = (o.existingWearer || '').toLowerCase().includes('crr') || (o.existingWearer || '').toLowerCase().includes('repeat');
+        const wearerBadge = isCrr ? `<span class="badge badge-crr">CRR (Repeat)</span>` : `<span class="badge badge-nbd">NBD (New)</span>`;
+
+        const totalAmt = parseFloat(o.totalBillAmount) || 0;
+        const advAmt = parseFloat(o.advancePaid) || 0;
+        const balAmt = parseFloat(o.balancePayable) || 0;
+        const payBadge = balAmt <= 0
+          ? `<span class="badge badge-paid">Paid Full</span>`
+          : `<span class="badge badge-pending">Bal: ₹${balAmt.toLocaleString('en-IN')}</span>`;
+
+        const pdfBtn = o.pdfUrl
+          ? `<a href="${o.pdfUrl}" target="_blank" class="btn btn-outline btn-sm" title="Open Drive PDF">📄 PDF</a>`
+          : `<span style="color:#cbd5e1; font-size:12px;">None</span>`;
+
+        const specsPreview = [o.size, o.baseType, o.hairLength].filter(Boolean).join(' • ') || '-';
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:700; color:var(--primary);">${escapeHtml(o.orderNumber || '-')}</div>
+              <div style="margin-top:2px;">${wearerBadge}</div>
+            </td>
+            <td style="white-space:nowrap; color:var(--text-muted); font-size:12px;">${escapeHtml(o.orderDate || '-')}</td>
+            <td>
+              <div style="font-weight:700;">${escapeHtml(o.clientName || 'Unnamed')}</div>
+              <div class="client-clickable" onclick="openClientHistory('${escapeHtml(o.contactNo)}', '${escapeHtml(o.clientName)}')" title="Click to view all past orders for this client">
+                📞 ${escapeHtml(o.contactNo || '-')}
+              </div>
+            </td>
+            <td><span class="badge badge-gray">${escapeHtml(o.branch || 'Mumbai')}</span></td>
+            <td>
+              <div><strong>₹${totalAmt.toLocaleString('en-IN')}</strong></div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Adv: ₹${advAmt.toLocaleString('en-IN')}</div>
+              <div style="margin-top:3px;">${payBadge}</div>
+            </td>
+            <td style="font-size:12px; color:var(--text-muted); max-width:180px;">${escapeHtml(specsPreview)}</td>
+            <td>${pdfBtn}</td>
+            <td style="text-align: right; white-space:nowrap;">
+              <button class="btn btn-primary btn-sm" onclick="editOrderDirectly('${escapeHtml(o.orderNumber)}')" style="margin-right:4px;">✏️ Edit</button>
+              <button class="btn btn-warning btn-sm" onclick="cloneFromDashboard('${escapeHtml(o.orderNumber)}', '${escapeHtml(o.clientName)}')">🔁 Repeat</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('pageInfoText').innerText = `Showing ${start + 1}-${end} of ${total}`;
+      document.getElementById('btnPrevPage').disabled = (currentPage === 1);
+      document.getElementById('btnNextPage').disabled = (currentPage >= totalPages);
+    }
+
+    function changePage(delta) {
+      currentPage += delta;
+      renderTable();
+    }
+
+    // Direct Edit from Dashboard
+    function editOrderDirectly(orderId) {
+      switchView('editor');
+      lookupOrder(orderId);
+    }
+
+    function cloneFromDashboard(orderId, clientName) {
+      switchView('editor');
+      lookupOrder(orderId).then(() => {
+        cloneAsRepeatOrder();
+      });
+    }
+
+    function lookupOrderFromEditor() {
+      const q = document.getElementById('editorSearchInput').value.trim();
+      if (!q) return alert('Please enter an Order ID or Mobile Number');
+      lookupOrder(q);
+    }
+
+    // Load Single Order into 6-Section Form
+    async function lookupOrder(query) {
+      document.getElementById('saveStatusIndicator').innerText = 'Loading...';
+      try {
+        const res = await fetch(`/api/lookup?q=${encodeURIComponent(query)}`);
+        const json = await res.json();
+        if (json.success && json.order) {
+          populateForm(json.order);
+          document.getElementById('saveStatusIndicator').innerText = 'Order Loaded';
+        } else {
+          alert('Could not find order: ' + query);
+          document.getElementById('saveStatusIndicator').innerText = 'Not Found';
+        }
+      } catch (err) {
+        console.error('Lookup error:', err);
+        document.getElementById('saveStatusIndicator').innerText = 'Error';
+      }
+    }
+
+    function populateForm(data) {
+      for (const [key, val] of Object.entries(data)) {
+        const el = document.getElementById(key);
+        if (el) el.value = val || '';
+      }
+      document.getElementById('bannerOrderNumber').innerText = data.orderNumber || 'AHL-XXXX';
+      document.getElementById('bannerClientName').innerText = data.clientName || 'Unnamed';
+      document.getElementById('bannerBranch').innerText = data.branch ? `(${data.branch})` : '';
+
+      if (data.pdfUrl) {
+        document.getElementById('drivePdfLinkWrapper').style.display = 'block';
+        document.getElementById('drivePdfLink').href = data.pdfUrl;
+      } else {
+        document.getElementById('drivePdfLinkWrapper').style.display = 'none';
+      }
+      calculateBalance();
+    }
+
+    // Balance & GST Math
+    function calculateBalance() {
+      const total = parseFloat(document.getElementById('totalBillAmount').value) || 0;
+      const advance = parseFloat(document.getElementById('advancePaid').value) || 0;
+      const units = parseInt(document.getElementById('noOfUnits').value, 10) || 1;
+      const balance = Math.max(0, total - advance);
+      document.getElementById('balancePayable').value = balance;
+
+      const minAdv = units * 5000;
+      const alertBox = document.getElementById('advanceAlert');
+      if (advance > 0 && advance < minAdv) {
+        alertBox.style.display = 'block';
+        alertBox.innerText = `⚠️ Note: Advance Paid (₹${advance.toLocaleString('en-IN')}) is below minimum ₹5,000/unit (₹${minAdv.toLocaleString('en-IN')} for ${units} unit${units > 1 ? 's' : ''}).`;
+      } else {
+        alertBox.style.display = 'none';
+      }
+    }
+
+    function autoCalculateGst() {
+      const pct = parseFloat(document.getElementById('gstPercentage').value) || 0;
+      const total = parseFloat(document.getElementById('totalBillAmount').value) || 0;
+      if (pct > 0 && total > 0) {
+        const gstAmt = Math.round(total * (pct / (100 + pct)));
+        document.getElementById('gstAmountCharged').value = gstAmt;
+      } else {
+        document.getElementById('gstAmountCharged').value = 0;
+      }
+    }
+
+    // Staff PIN Save
+    function promptPinToSave() {
+      document.getElementById('pinModal').style.display = 'flex';
+      document.getElementById('staffPinInput').focus();
+    }
+    function closePinModal() {
+      document.getElementById('pinModal').style.display = 'none';
+    }
+
+    async function confirmSaveWithPin() {
+      const pin = document.getElementById('staffPinInput').value.trim();
+      const editor = document.getElementById('editorNameInput').value.trim() || 'Roshani';
+      if (pin !== '2026' && pin !== '1234') {
+        alert('Invalid Staff PIN! Please check with management.');
+        return;
+      }
+      closePinModal();
+      document.getElementById('saveStatusIndicator').innerText = 'Saving & Syncing Drive PDF...';
+
+      const formData = new FormData(document.getElementById('orderForm'));
+      const payload = {
+        pin,
+        editorName: editor,
+        timestamp: new Date().toISOString(),
+        orderData: Object.fromEntries(formData.entries())
+      };
+
+      try {
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          document.getElementById('saveStatusIndicator').innerText = 'Saved & PDF Updated!';
+          alert('✅ Order updated successfully! Google Sheet row updated, Drive PDF regenerated & WhatsApp notification dispatched.');
+          if (json.pdfUrl) {
+            document.getElementById('drivePdfLinkWrapper').style.display = 'block';
+            document.getElementById('drivePdfLink').href = json.pdfUrl;
+          }
+          // Refresh dashboard data in background
+          loadAllOrders(true);
+        } else {
+          alert('Error saving order: ' + json.message);
+          document.getElementById('saveStatusIndicator').innerText = 'Save Error';
+        }
+      } catch (err) {
+        alert('Failed to connect to backend: ' + err.message);
+        document.getElementById('saveStatusIndicator').innerText = 'Offline';
+      }
+    }
+
+    // Repeat Order (CRR) Creation
+    async function cloneAsRepeatOrder() {
+      const oldId = document.getElementById('orderNumber').value || '';
+      if (!oldId) return alert('Please load an existing order first to clone a repeat order.');
+      const client = document.getElementById('clientName').value || 'Client';
+      if (!confirm(`Create a repeat order (CRR) for ${client} based on measurements from ${oldId}?`)) return;
+
+      document.getElementById('saveStatusIndicator').innerText = 'Cloning measurements...';
+      try {
+        const res = await fetch('/api/repeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ baseOrderNumber: oldId })
+        });
+        const json = await res.json();
+        if (json.success && json.newOrderData) {
+          populateForm(json.newOrderData);
+          switchFormTab('tab-payment');
+          document.getElementById('saveStatusIndicator').innerText = 'Repeat Initialized';
+          alert(`🔁 ${json.message}! Past measurements and specs are preserved. Please enter the new delivery date & payment, then click Save.`);
+        } else {
+          alert('Error initializing repeat order: ' + (json.message || 'Unknown error'));
+          document.getElementById('saveStatusIndicator').innerText = 'Ready';
+        }
+      } catch (err) {
+        alert('Failed to connect to backend: ' + err.message);
+        document.getElementById('saveStatusIndicator').innerText = 'Ready';
+      }
+    }
+
+    // Client History Modal
+    function openClientHistory(phone, clientName) {
+      if (!phone || phone === '-') return;
+      const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+      document.getElementById('clientModalTitle').innerText = `Client Order History: ${clientName}`;
+      document.getElementById('clientModalPhone').innerText = `Mobile: +91 ${cleanPhone}`;
+
+      const clientOrders = allOrders.filter(o => o.contactNo.replace(/\D/g, '').slice(-10) === cleanPhone);
+      const tbody = document.getElementById('clientHistoryTableBody');
+
+      if (clientOrders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px;">No other records found for this phone number.</td></tr>`;
+      } else {
+        tbody.innerHTML = clientOrders.map(o => `
+          <tr>
+            <td><strong>${escapeHtml(o.orderNumber)}</strong></td>
+            <td>${escapeHtml(o.orderDate || '-')}</td>
+            <td><span class="badge badge-gray">${escapeHtml(o.branch || 'Mumbai')}</span></td>
+            <td>₹${(parseFloat(o.totalBillAmount) || 0).toLocaleString('en-IN')}</td>
+            <td>${escapeHtml([o.size, o.baseType, o.hairLength].filter(Boolean).join(' • ') || '-')}</td>
+            <td>${o.pdfUrl ? `<a href="${o.pdfUrl}" target="_blank" class="btn btn-outline btn-sm">📄 View</a>` : '-'}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="closeClientModal(); editOrderDirectly('${escapeHtml(o.orderNumber)}')">✏️ Open</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('clientHistoryModal').style.display = 'flex';
+    }
+
+    function closeClientModal() {
+      document.getElementById('clientHistoryModal').style.display = 'none';
+    }
+
+    // Load Audit & Change History
+    async function loadHistory(forceRefresh = false) {
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px;"><div class="spinner"></div><div style="margin-top:8px;">Loading changes log...</div></td></tr>`;
+
+      try {
+        const res = await fetch(`/api/history${forceRefresh ? '?forceRefresh=true' : ''}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.logs)) {
+          allHistory = data.logs;
+          renderHistoryTable(allHistory);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">No change history recorded yet.</td></tr>`;
+        }
+      } catch (err) {
+        console.error('History error:', err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--danger);">Error loading history from server.</td></tr>`;
+      }
+    }
+
+    function renderHistoryTable(logs) {
+      const tbody = document.getElementById('historyTableBody');
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">No matching log entries found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.map(l => `
+        <tr>
+          <td style="font-size:12px; white-space:nowrap; color:var(--text-muted); font-weight:600;">${escapeHtml(l.timestamp || '-')}</td>
+          <td><strong>${escapeHtml(l.orderNumber || '-')}</strong></td>
+          <td>
+            <div style="font-weight:700;">${escapeHtml(l.clientName || 'Client')}</div>
+            <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(l.contactNo || '')}</div>
+          </td>
+          <td><span class="badge badge-gray">${escapeHtml(l.branch || 'Mumbai')}</span></td>
+          <td><span class="badge badge-crr">${escapeHtml(l.existingWearer || 'CRR')}</span></td>
+          <td>
+            <div>₹${(parseFloat(l.totalBillAmount) || 0).toLocaleString('en-IN')}</div>
+            <div style="font-size:11px; color:var(--text-muted);">Adv: ₹${(parseFloat(l.advancePaid) || 0).toLocaleString('en-IN')}</div>
+          </td>
+          <td style="font-size:12px; max-width:260px;">${escapeHtml(l.remarks || 'Order updated')}</td>
+          <td>${l.pdfUrl ? `<a href="${l.pdfUrl}" target="_blank" class="btn btn-outline btn-sm">📄 PDF</a>` : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterHistoryTable() {
+      const q = (document.getElementById('historySearch').value || '').trim().toLowerCase();
+      if (!q) {
+        renderHistoryTable(allHistory);
+        return;
+      }
+      const filtered = allHistory.filter(l =>
+        (l.orderNumber || '').toLowerCase().includes(q) ||
+        (l.clientName || '').toLowerCase().includes(q) ||
+        (l.contactNo || '').includes(q) ||
+        (l.remarks || '').toLowerCase().includes(q)
+      );
+      renderHistoryTable(filtered);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    // Startup Init
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Load All Orders
+      loadAllOrders();
+
+      // 2. Check URL parameters for direct deep-link (e.g. ?id=AHL-9913 or ?view=history)
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      const id = params.get('id') || params.get('orderNumber') || params.get('q');
+
+      if (view === 'history') {
+        switchView('history');
+      } else if (id) {
+        switchView('editor');
+        lookupOrder(id);
+      }
+    });
+  </script>
+</body>
+</html>

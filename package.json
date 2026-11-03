@@ -1,0 +1,14 @@
+{
+  "name": "ahl-order-portal",
+  "version": "1.0.0",
+  "description": "AHL Order Management, Edit & Repeat CRR Single Page Application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}
+

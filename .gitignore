@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+*.log
+tunnel_runner.js
+*credential*.json
+*service_account*.json
+*automation*.json
+.DS_Store
