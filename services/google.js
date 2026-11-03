@@ -20,9 +20,12 @@ function clearCache() {
 
 function getCredentials() {
   if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+    let key = String(process.env.GOOGLE_PRIVATE_KEY).trim();
+    if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
+    if (key.startsWith("'") && key.endsWith("'")) key = key.slice(1, -1);
     return {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL.trim(),
+      private_key: key.replace(/\\n/g, '\n')
     };
   }
   // Local fallback: try loading ahl-sheets-automation-0e0bcacb69d7.json
