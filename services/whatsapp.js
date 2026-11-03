@@ -3,7 +3,7 @@ const https = require('https');
 function getWahaConfig() {
   return {
     baseUrl: process.env.WAHA_BASE_URL || 'https://waha.hairscalptradingco.com',
-    apiKey: process.env.WAHA_API_KEY || '',
+    apiKey: process.env.WAHA_API_KEY || 'key_WJ6tR4MUcsaVC9xak0VQLqxIHrd8yl7A',
     session: process.env.WAHA_SESSION_NAME || 'ahlaiteam'
   };
 }
