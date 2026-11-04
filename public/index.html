@@ -961,11 +961,20 @@
             <div class="grid-3">
               <div class="form-group">
                 <label>Colour</label>
-                <input type="text" id="colour" name="colour" placeholder="e.g. Black, Natural Black">
+                <select id="colour" name="colour">
+                  <option value="#1A">#1A</option>
+                  <option value="#1B">#1B</option>
+                  <option value="#2">#2</option>
+                  <option value="#3">#3</option>
+                  <option value="#4">#4</option>
+                  <option value="#5">#5</option>
+                  <option value="#NC">#NC</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
               <div class="form-group">
-                <label>Target Colour</label>
-                <input type="text" id="targetColour" name="targetColour" placeholder="e.g. Black, Dark Brown">
+                <label>Target Colour / Custom Shade</label>
+                <input type="text" id="targetColour" name="targetColour" placeholder="e.g. 55/0, 44/0, Natural Black">
               </div>
               <div class="form-group">
                 <label>Grey %</label>
@@ -1000,10 +1009,15 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>Type of Density (Base Lace)</label>
+                <label>Type of Density (Optional / Lace Spec)</label>
                 <select id="typeOfDensity" name="typeOfDensity">
-                  <option value="Full Lace">Full Lace</option>
-                  <option value="Air Lace">Air Lace</option>
+                  <option value="">None / Standard</option>
+                  <option value="Full Lace: Bhlc Medium">Full Lace: Bhlc Medium</option>
+                  <option value="Full Lace: Bhlc-Euro-Heavy">Full Lace: Bhlc-Euro-Heavy</option>
+                  <option value="Full Lace: Champion-Medium">Full Lace: Champion-Medium</option>
+                  <option value="Full Lace: Amy-Medium">Full Lace: Amy-Medium</option>
+                  <option value="Air Lace: Champion-Heavy">Air Lace: Champion-Heavy</option>
+                  <option value="Air Lace: Nan-Low">Air Lace: Nan-Low</option>
                 </select>
               </div>
             </div>
@@ -1100,12 +1114,18 @@
 
             <div class="grid-2">
               <div class="form-group">
-                <label>Client Hairline Description</label>
-                <input type="text" id="clientHairline" name="clientHairline" placeholder="e.g. Receding, M-Shape">
+                <label>Client Hairline</label>
+                <select id="clientHairline" name="clientHairline">
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
               </div>
               <div class="form-group">
-                <label>Base Hairline Description</label>
-                <input type="text" id="baseHairline" name="baseHairline" placeholder="e.g. Natural Skin Base, Lace">
+                <label>Base Hairline</label>
+                <select id="baseHairline" name="baseHairline">
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
               </div>
             </div>
 
