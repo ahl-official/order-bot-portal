@@ -20,21 +20,63 @@ function buildOrderHtml(d) {
     return Number.isFinite(n) ? n.toLocaleString('en-IN') : esc(x);
   };
 
+  const mediaFields = [
+    ['Front photo', 'uploadClientPhotoFront', 'Upload Client Photo - Front'],
+    ['Top photo', 'uploadClientPhotoTop', 'Upload Client Photo - Top'],
+    ['Left photo', 'uploadClientPhotoLeft', 'Upload Client Photo - Left'],
+    ['Right photo', 'uploadClientPhotoRight', 'Upload Client Photo - Right'],
+    ['Back photo', 'uploadClientPhotoBack', 'Upload Client Photo - Back'],
+    ['Mould picture', 'clientMouldPhoto', 'Client Mould Photo'],
+    ['Demo unit picture', 'demoPicture', 'Demo Picture'],
+    ['Client after demo', 'clientConsentFormPage1', 'Client Consent Form Page 1']
+  ];
+
+  const activePhotos = mediaFields.map(([label, k1, k2]) => {
+    const originalUrl = String(d[k1] || d[k2] || '').trim();
+    if (!originalUrl) return null;
+    return { label, url: originalUrl };
+  }).filter(Boolean);
+
+  let photoTableHtml = '';
+  if (activePhotos.length > 0) {
+    const colsPerRow = 4;
+    let rowsHtml = '';
+    for (let i = 0; i < activePhotos.length; i += colsPerRow) {
+      const chunk = activePhotos.slice(i, i + colsPerRow);
+      let cells = '';
+      chunk.forEach(photo => {
+        const imgTag = '<img src="' + photo.url + '" width="115" height="115" style="width:115px;height:115px;object-fit:cover;border:1px solid #333;display:block;margin:0 auto;" />';
+        cells += '<td align="center" style="width:25%;vertical-align:top;padding:4px 3px;border:none;">'
+          + imgTag
+          + '<div style="font-size:8pt;font-weight:bold;margin-top:3px;color:#000;">' + esc(photo.label) + '</div>'
+          + '</td>';
+      });
+      for (let j = chunk.length; j < colsPerRow; j++) {
+        cells += '<td style="width:25%;border:none;"></td>';
+      }
+      rowsHtml += '<tr>' + cells + '</tr>';
+    }
+    photoTableHtml = '<table style="width:100%;border-collapse:collapse;margin-top:6px;border:none;" border="0">' + rowsHtml + '</table>';
+  } else {
+    photoTableHtml = '<p style="font-size:8.5pt;margin:6px 0;">No photos attached.</p>';
+  }
+
   const html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
     + '<title>Order Form - ' + esc(orderNum) + '</title>'
     + '<style>'
+    + '@page { size: A4; margin: 10mm 15mm 10mm 15mm; }'
     + '* { box-sizing: border-box; }'
-    + 'body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.35; color: #000; margin: 0; padding: 24px 36px; background: #fff; }'
-    + '.title { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 12px; }'
-    + '.bar-blue { border-top: 2px solid #2b6cb0; border-bottom: 2px solid #2b6cb0; color: #2b6cb0; font-weight: bold; font-size: 11pt; padding: 3px 0; margin: 10px 0 6px 0; }'
-    + '.bar-red { border-top: 2px solid #cc0000; border-bottom: 2px solid #cc0000; color: #cc0000; font-weight: bold; font-size: 11pt; padding: 3px 0; margin: 10px 0 6px 0; }'
-    + '.table-data { width: 100%; border-collapse: collapse; margin-bottom: 4px; }'
-    + '.table-data td { padding: 1.5px 0; font-size: 10pt; font-weight: bold; vertical-align: top; }'
-    + '.table-data td.lbl { width: 320px; color: #000; }'
+    + 'body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.18; color: #000; margin: 0; padding: 0; background: #fff; }'
+    + '.title { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 4px 0; }'
+    + '.bar-blue { border-top: 1.5px solid #2b6cb0; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; font-weight: bold; font-size: 9pt; padding: 1.5px 0; margin: 4px 0 2px 0; }'
+    + '.bar-red { border-top: 1.5px solid #cc0000; border-bottom: 1.5px solid #cc0000; color: #cc0000; font-weight: bold; font-size: 9pt; padding: 1.5px 0; margin: 4px 0 2px 0; }'
+    + '.table-data { width: 100%; border-collapse: collapse; margin-bottom: 2px; }'
+    + '.table-data td { padding: 0.5px 0; font-size: 8.5pt; font-weight: bold; vertical-align: top; line-height: 1.15; }'
+    + '.table-data td.lbl { width: 270px; color: #000; }'
     + '.table-data td.val { color: #000; }'
-    + '.notes-box { border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; margin: 6px 0; font-size: 10pt; font-weight: bold; line-height: 1.3; }'
-    + '.double-line { border-bottom: 3px double #2b6cb0; margin: 8px 0 6px 0; }'
-    + '.page-break { page-break-before: always; break-before: page; padding-top: 15px; }'
+    + '.notes-box { border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin: 3px 0; font-size: 8.5pt; font-weight: bold; line-height: 1.15; }'
+    + '.double-line { border-bottom: 2px double #2b6cb0; margin: 4px 0 2px 0; }'
+    + '.page-break { page-break-before: always; break-before: page; mso-break-type: section-break; clear: both; }'
     + '</style></head><body>'
 
     // ==================== PAGE 1 ====================
@@ -86,7 +128,7 @@ function buildOrderHtml(d) {
     + '<tr><td class="lbl">Date :</td><td class="val">' + val('emi3Date', 'Emi 3 Date') + '</td></tr>'
     + '</table>'
     + '<div class="notes-box">Notes 2: ' + val('notes2', 'Notes 2 (Payment Details)', 'None') + '</div>'
-    + '<div style="font-weight: bold; margin: 6px 0; font-size: 10pt;">Client type - ' + val('clientStatus', 'Client Status', 'REGULAR') + '</div>'
+    + '<div style="font-weight: bold; margin: 4px 0 2px 0; font-size: 8.5pt;">Client type - ' + val('clientStatus', 'Client Status', 'REGULAR') + '</div>'
     + '<div class="double-line"></div>'
     + '<table class="table-data">'
     + '<tr><td class="lbl">Pic Taken :</td><td class="val">' + val('picTaken', 'Pic Taken') + '</td></tr>'
@@ -95,7 +137,7 @@ function buildOrderHtml(d) {
     + '</table>'
 
     // ==================== PAGE 2 ====================
-    + '<div class="page-break"></div>'
+    + '<hr class="page-break" style="page-break-before: always; break-before: page; border: none; margin: 0; padding: 0; height: 0;" />'
     + '<table class="table-data">'
     + '<tr><td class="lbl">Reason :</td><td class="val">' + val('videoTakenReason', 'Video Not Taken Reason') + '</td></tr>'
     + '<tr><td class="lbl">Mould Taken :</td><td class="val">' + val('mouldTaken', 'Mould Taken') + '</td></tr>'
@@ -154,7 +196,7 @@ function buildOrderHtml(d) {
     + '</table>'
 
     // ==================== PAGE 3 ====================
-    + '<div class="page-break"></div>'
+    + '<hr class="page-break" style="page-break-before: always; break-before: page; border: none; margin: 0; padding: 0; height: 0;" />'
     + '<div class="notes-box">Notes 4: ' + val('notes4', 'Notes 4 (Technician)', 'None') + '</div>'
     + '<table class="table-data">'
     + '<tr><td class="lbl">As Per Date :</td><td class="val">' + val('asPerDate', 'As per Date') + '</td></tr>'
@@ -164,11 +206,11 @@ function buildOrderHtml(d) {
     + '</table>'
 
     + '<div class="bar-red">Client History</div>'
-    + '<div style="font-weight: bold; margin: 6px 0; font-size: 10pt;">No previous order history available.</div>'
+    + '<div style="font-weight: bold; margin: 3px 0; font-size: 8.5pt;">No previous order history available.</div>'
 
     + '<div class="bar-blue">Client Photos</div>'
-    + '<div style="font-size: 9pt; font-weight: bold; margin-bottom: 8px;">Current Order #' + esc(orderNum) + ' &bull; ' + val('orderDate', 'Order Date') + '</div>'
-    + '<p style="font-size:10pt">Photos synchronized with Google Drive media storage.</p>'
+    + '<div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">Current Order #' + esc(orderNum) + ' &bull; ' + val('orderDate', 'Order Date') + '</div>'
+    + photoTableHtml
 
     + '</body></html>';
 
@@ -219,10 +261,9 @@ async function syncPdfToDrive(orderData) {
         return `https://drive.google.com/file/d/${fileId}/view`;
       }
     }
-    return '';
   } catch (err) {
-    console.warn('PDF Drive Sync warning:', err.message);
-    return orderData.pdfUrl || '';
+    console.error('Error syncing PDF to Drive:', err);
+    return null;
   }
 }
 
