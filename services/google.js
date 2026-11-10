@@ -178,6 +178,7 @@ const FIELD_TO_HEADER = {
   workType: 'Work Type',
   densityPercentage: 'Density Percentage',
   formFilledBy: 'Order Form Filled By',
+  orderSource: 'Order Source',
   typeOfDensity: 'Type of Density',
   notes3: 'Notes 3 (Client Specifications)',
   toDoAfterwork: 'To Do Afterwork',
@@ -363,6 +364,7 @@ async function getAllOrders(options = {}) {
   const cWorkType = col(/work\s*type/i, 48);
   const cDensityPerc = col(/density\s*percentage/i, 51);
   const cFormFilledBy = col(/order\s*form\s*filled\s*by|form\s*filled\s*by/i, -1);
+  const cOrderSource = col(/order\s*source|package\s*source/i, -1);
 
   const orders = [];
   for (let i = 1; i < rows.length; i++) {
@@ -394,6 +396,7 @@ async function getAllOrders(options = {}) {
       workType: String(cWorkType !== -1 ? r[cWorkType] : '').trim(),
       densityPercentage: String(cDensityPerc !== -1 ? r[cDensityPerc] : '').trim(),
       formFilledBy: String(cFormFilledBy !== -1 ? r[cFormFilledBy] : '').trim(),
+      orderSource: String(cOrderSource !== -1 ? r[cOrderSource] : '').trim(),
       pdfUrl: String(r[cPdf] || '').trim()
     });
   }

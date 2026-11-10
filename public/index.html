@@ -791,11 +791,11 @@
             <div class="grid-4">
               <div class="form-group">
                 <label>Form Filled By</label>
-                <input type="text" id="formFilledBy" name="formFilledBy" placeholder="Staff Name">
+                <input type="text" id="formFilledBy" name="formFilledBy" list="staffNamesList" placeholder="e.g. Zoya / Roshani">
               </div>
               <div class="form-group">
                 <label>Consultation By</label>
-                <input type="text" id="consultationBy" name="consultationBy">
+                <input type="text" id="consultationBy" name="consultationBy" list="staffNamesList" placeholder="Select or type consultant">
               </div>
               <div class="form-group">
                 <label>Technician Name</label>
@@ -806,6 +806,14 @@
                 <input type="text" id="demoGivenBy" name="demoGivenBy">
               </div>
             </div>
+            <datalist id="staffNamesList">
+              <option value="Pooja">
+              <option value="Sejal">
+              <option value="Gauri">
+              <option value="Rahul Singh">
+              <option value="Zoya">
+              <option value="Vinitt sir">
+            </datalist>
             <div class="grid-2">
               <div class="form-group">
                 <label>Existing Wearer / Lifecycle Stage</label>
@@ -1201,6 +1209,47 @@
         <div id="tab-media" class="tab-content">
           <div class="form-card">
             <div class="card-title">📸 Section 6: Photos & Media Documentation</div>
+
+            <!-- Pre-Media Specifications (SS1 Density %, SS2 Form Filled By, SS3 Order Source) -->
+            <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <span>📋</span> Pre-Media Specifications & Documentation
+              </div>
+              <div class="grid-3">
+                <div class="form-group">
+                  <label>Order Source *</label>
+                  <select id="orderSource" name="orderSource">
+                    <option value="">Select</option>
+                    <option value="Standalone">Standalone</option>
+                    <option value="Package">Package</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Density Percentage *</label>
+                  <select id="densityPercentage" name="densityPercentage">
+                    <option value="">Select Percentage</option>
+                    <option value="60%">60%</option>
+                    <option value="80%">80%</option>
+                    <option value="100%">100%</option>
+                    <option value="120%">120%</option>
+                    <option value="180%">180%</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Form Filled by Whom *</label>
+                  <select id="formFilledBySelect" name="formFilledBySelect" onchange="const f = document.getElementById('formFilledBy'); if (f) f.value = this.value;">
+                    <option value="">Select Name</option>
+                    <option value="Pooja">Pooja</option>
+                    <option value="Sejal">Sejal</option>
+                    <option value="Gauri">Gauri</option>
+                    <option value="Rahul Singh">Rahul Singh</option>
+                    <option value="Zoya">Zoya</option>
+                    <option value="Vinitt sir">Vinitt sir</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">
               Google Drive links and non-capture reasons recorded by staff:
             </p>
@@ -1525,7 +1574,7 @@
       const select = document.getElementById('dashConsultant');
       if (!select) return;
       const currentVal = select.value;
-      const consultants = new Set();
+      const consultants = new Set(['Pooja', 'Sejal', 'Gauri', 'Rahul Singh', 'Zoya', 'Vinitt sir']);
       allOrders.forEach(o => {
         const c = (o.consultationBy || '').trim();
         if (c && c.length > 1) consultants.add(c);
@@ -1788,6 +1837,10 @@
       for (const [key, val] of Object.entries(data)) {
         const el = document.getElementById(key);
         if (el) el.value = val || '';
+      }
+      if (data.formFilledBy) {
+        const sel = document.getElementById('formFilledBySelect');
+        if (sel) sel.value = data.formFilledBy;
       }
       document.getElementById('bannerOrderNumber').innerText = data.orderNumber || 'AHL-XXXX';
       document.getElementById('bannerClientName').innerText = data.clientName || 'Unnamed';
