@@ -45,7 +45,7 @@ function buildOrderHtml(d) {
       const chunk = activePhotos.slice(i, i + colsPerRow);
       let cells = '';
       chunk.forEach(photo => {
-        const imgTag = '<img src="' + photo.url + '" width="115" height="115" style="width:115px;height:115px;object-fit:cover;border:1px solid #333;display:block;margin:0 auto;" />';
+        const imgTag = '<img src="' + photo.url + '" width="115" height="115" style="width:115px;height:115px;object-fit:cover;border:none;display:block;margin:0 auto;" />';
         cells += '<td align="center" style="width:25%;vertical-align:top;padding:4px 3px;border:none;">'
           + imgTag
           + '<div style="font-size:8pt;font-weight:bold;margin-top:3px;color:#000;">' + esc(photo.label) + '</div>'
@@ -56,7 +56,7 @@ function buildOrderHtml(d) {
       }
       rowsHtml += '<tr>' + cells + '</tr>';
     }
-    photoTableHtml = '<table style="width:100%;border-collapse:collapse;margin-top:6px;border:none;" border="0">' + rowsHtml + '</table>';
+    photoTableHtml = '<table border="0" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:6px;border:none;">' + rowsHtml + '</table>';
   } else {
     photoTableHtml = '<p style="font-size:8.5pt;margin:6px 0;">No photos attached.</p>';
   }
@@ -67,14 +67,15 @@ function buildOrderHtml(d) {
     + '@page { size: A4; margin: 10mm 15mm 10mm 15mm; }'
     + '* { box-sizing: border-box; }'
     + 'body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.18; color: #000; margin: 0; padding: 0; background: #fff; }'
+    + 'table, tr, td, th { border: none !important; border-width: 0 !important; outline: none !important; }'
     + '.title { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 4px 0; }'
     + '.bar-blue { border-top: 1.5px solid #2b6cb0; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; font-weight: bold; font-size: 9pt; padding: 1.5px 0; margin: 4px 0 2px 0; }'
     + '.bar-red { border-top: 1.5px solid #cc0000; border-bottom: 1.5px solid #cc0000; color: #cc0000; font-weight: bold; font-size: 9pt; padding: 1.5px 0; margin: 4px 0 2px 0; }'
-    + '.table-data { width: 100%; border-collapse: collapse; margin-bottom: 2px; }'
-    + '.table-data td { padding: 0.5px 0; font-size: 8.5pt; font-weight: bold; vertical-align: top; line-height: 1.15; }'
+    + '.table-data { width: 100%; border-collapse: collapse; margin-bottom: 2px; border: none !important; }'
+    + '.table-data td { padding: 0.5px 0; font-size: 8.5pt; font-weight: bold; vertical-align: top; line-height: 1.15; border: none !important; }'
     + '.table-data td.lbl { width: 270px; color: #000; }'
     + '.table-data td.val { color: #000; }'
-    + '.notes-box { border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 0; margin: 3px 0; font-size: 8.5pt; font-weight: bold; line-height: 1.15; }'
+    + '.notes-box { padding: 2px 0; margin: 3px 0; font-size: 8.5pt; font-weight: bold; line-height: 1.15; border: none !important; }'
     + '.double-line { border-bottom: 2px double #2b6cb0; margin: 4px 0 2px 0; }'
     + '.page-break { page-break-before: always; break-before: page; mso-break-type: section-break; clear: both; }'
     + '</style></head><body>'
@@ -82,7 +83,7 @@ function buildOrderHtml(d) {
     // ==================== PAGE 1 ====================
     + '<div class="title">Order Form</div>'
     + '<div class="bar-blue">Client Details</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Name :</td><td class="val">' + val('clientName', 'Client Name') + '</td></tr>'
     + '<tr><td class="lbl">Order No :</td><td class="val">' + esc(orderNum) + '</td></tr>'
     + '<tr><td class="lbl">City :</td><td class="val">' + val('city', 'City') + '</td></tr>'
@@ -99,7 +100,7 @@ function buildOrderHtml(d) {
     + '</table>'
 
     + '<div class="bar-blue">As Discussed In Consultation</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Client Preference :</td><td class="val">' + val('clientPreference', 'Client Preference') + '</td></tr>'
     + '<tr><td class="lbl">Density :</td><td class="val">' + val('consultDensity', 'Density (Consultant)') + '</td></tr>'
     + '<tr><td class="lbl">Hairline :</td><td class="val">' + val('consultHairline', 'Hairline (Consultant)') + '</td></tr>'
@@ -110,7 +111,7 @@ function buildOrderHtml(d) {
     + '<div class="notes-box">Notes 1: ' + val('notes1', 'Notes 1 (From Consultant)', 'None') + '</div>'
 
     + '<div class="bar-blue">Payment Details</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Payment Done By :</td><td class="val">' + val('paymentDoneBy', 'Payment Done By') + '</td></tr>'
     + '<tr><td class="lbl">Total Bill amt :</td><td class="val">' + amount('totalBillAmount', 'Total Bill Amount') + '</td></tr>'
     + '<tr><td class="lbl">Unit cost :</td><td class="val">' + amount('unitCost', 'Unit Cost') + '</td></tr>'
@@ -130,7 +131,7 @@ function buildOrderHtml(d) {
     + '<div class="notes-box">Notes 2: ' + val('notes2', 'Notes 2 (Payment Details)', 'None') + '</div>'
     + '<div style="font-weight: bold; margin: 4px 0 2px 0; font-size: 8.5pt;">Client type - ' + val('clientStatus', 'Client Status', 'REGULAR') + '</div>'
     + '<div class="double-line"></div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Pic Taken :</td><td class="val">' + val('picTaken', 'Pic Taken') + '</td></tr>'
     + '<tr><td class="lbl">Reason :</td><td class="val">' + val('picTakenReason', 'Pic Not Taken Reason') + '</td></tr>'
     + '<tr><td class="lbl">Video Taken :</td><td class="val">' + val('videoTaken', 'Video Taken') + '</td></tr>'
@@ -138,7 +139,7 @@ function buildOrderHtml(d) {
 
     // ==================== PAGE 2 ====================
     + '<hr class="page-break" style="page-break-before: always; break-before: page; border: none; margin: 0; padding: 0; height: 0;" />'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Reason :</td><td class="val">' + val('videoTakenReason', 'Video Not Taken Reason') + '</td></tr>'
     + '<tr><td class="lbl">Mould Taken :</td><td class="val">' + val('mouldTaken', 'Mould Taken') + '</td></tr>'
     + '<tr><td class="lbl">Reason :</td><td class="val">' + val('mouldTakenReason', 'Mould Not Taken Reason') + '</td></tr>'
@@ -149,7 +150,7 @@ function buildOrderHtml(d) {
     + '</table>'
 
     + '<div class="bar-red">Client Specification</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Size :</td><td class="val">' + val('size', 'Size') + '</td></tr>'
     + '<tr><td class="lbl">Size Other :</td><td class="val">' + val('sizeOther', 'Size Other') + '</td></tr>'
     + '<tr><td class="lbl">Base Type :</td><td class="val">' + val('baseType', 'Base Type') + '</td></tr>'
@@ -166,7 +167,7 @@ function buildOrderHtml(d) {
     + '<tr><td class="lbl">Type of Density :</td><td class="val">' + val('typeOfDensity', 'Type of Density') + '</td></tr>'
     + '</table>'
     + '<div class="notes-box">Notes 3: ' + val('notes3', 'Notes 3 (Client Specifications)', 'None') + '</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Colour On System :</td><td class="val">' + val('colorOnSystem', 'Color On System', val('colour', 'Colour')) + '</td></tr>'
     + '<tr><td class="lbl">Colour On Client :</td><td class="val">' + val('colorOnClients', 'Color On Clients', val('colour', 'Colour')) + '</td></tr>'
     + '</table>'
@@ -175,7 +176,7 @@ function buildOrderHtml(d) {
     + '<div class="notes-box">To Do Afterwork: ' + val('toDoAfterwork', 'To Do Afterwork', 'None') + '</div>'
 
     + '<div class="bar-blue">Pg. 3</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Density :</td><td class="val">' + val('density', 'Density (Technician)', val('consultDensity', 'Density (Consultant)')) + '</td></tr>'
     + '<tr><td class="lbl">Hair Length :</td><td class="val">' + val('hairLength', 'Hair Length') + '</td></tr>'
     + '<tr><td class="lbl">Top :</td><td class="val">' + val('top', 'Top') + '</td></tr>'
@@ -198,7 +199,7 @@ function buildOrderHtml(d) {
     // ==================== PAGE 3 ====================
     + '<hr class="page-break" style="page-break-before: always; break-before: page; border: none; margin: 0; padding: 0; height: 0;" />'
     + '<div class="notes-box">Notes 4: ' + val('notes4', 'Notes 4 (Technician)', 'None') + '</div>'
-    + '<table class="table-data">'
+    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">As Per Date :</td><td class="val">' + val('asPerDate', 'As per Date') + '</td></tr>'
     + '<tr><td class="lbl">Hairline Shaped :</td><td class="val">' + val('hairlineShaped', 'Hairline Shaped') + '</td></tr>'
     + '<tr><td class="lbl">Hairline Shaped 2 :</td><td class="val">' + val('hairlineShaped2', 'Hairline Shaped 2') + '</td></tr>'
