@@ -176,6 +176,8 @@ const FIELD_TO_HEADER = {
   hairlineSystem: 'Hairline of system',
   blechKnots: 'Blech Knots',
   workType: 'Work Type',
+  densityPercentage: 'Density Percentage',
+  formFilledBy: 'Order Form Filled By',
   typeOfDensity: 'Type of Density',
   notes3: 'Notes 3 (Client Specifications)',
   toDoAfterwork: 'To Do Afterwork',
@@ -358,6 +360,9 @@ async function getAllOrders(options = {}) {
   const cPdf = col(/pdf\s*file/i, 84);
   const cTech = col(/technician\s*name/i, 12);
   const cConsult = col(/consultation\s*by/i, 8);
+  const cWorkType = col(/work\s*type/i, 48);
+  const cDensityPerc = col(/density\s*percentage/i, 51);
+  const cFormFilledBy = col(/order\s*form\s*filled\s*by|form\s*filled\s*by/i, -1);
 
   const orders = [];
   for (let i = 1; i < rows.length; i++) {
@@ -386,6 +391,9 @@ async function getAllOrders(options = {}) {
       hairLength: String(r[cHairLength] || '').trim(),
       technicianName: String(r[cTech] || '').trim(),
       consultationBy: String(r[cConsult] || '').trim(),
+      workType: String(cWorkType !== -1 ? r[cWorkType] : '').trim(),
+      densityPercentage: String(cDensityPerc !== -1 ? r[cDensityPerc] : '').trim(),
+      formFilledBy: String(cFormFilledBy !== -1 ? r[cFormFilledBy] : '').trim(),
       pdfUrl: String(r[cPdf] || '').trim()
     });
   }

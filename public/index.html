@@ -212,7 +212,7 @@
     /* KPI Summary Cards */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
       gap: 14px;
       margin-bottom: 20px;
     }
@@ -225,6 +225,10 @@
       display: flex;
       align-items: center;
       gap: 14px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .kpi-card:hover {
+      box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.1);
     }
     .kpi-icon {
       width: 44px;
@@ -239,6 +243,7 @@
     .kpi-purple { background: #f3e8ff; color: #9333ea; }
     .kpi-green { background: #dcfce7; color: #16a34a; }
     .kpi-amber { background: #fef3c7; color: #d97706; }
+    .kpi-red { background: #fee2e2; color: #dc2626; }
     .kpi-data h3 { font-size: 22px; font-weight: 800; color: var(--text-main); line-height: 1.1; }
     .kpi-data p { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
 
@@ -328,8 +333,11 @@
     }
     .badge-crr { background: #ede9fe; color: #6d28d9; }
     .badge-nbd { background: #dbeafe; color: #1d4ed8; }
+    .badge-nbd-crr { background: #e0e7ff; color: #3730a3; }
+    .badge-repeat-crr { background: #f3e8ff; color: #7e22ce; }
     .badge-paid { background: #dcfce7; color: #15803d; }
     .badge-pending { background: #fef3c7; color: #b45309; }
+    .badge-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
     .badge-gray { background: #f1f5f9; color: #475569; }
 
     .client-clickable {
@@ -617,11 +625,18 @@
             <p>Balance Due Orders</p>
           </div>
         </div>
+        <div class="kpi-card" onclick="filterByLowAdvance()" style="cursor: pointer; border-left: 4px solid var(--danger);" title="Click to view orders with Advance < ₹5,000">
+          <div class="kpi-icon kpi-red">🚨</div>
+          <div class="kpi-data">
+            <h3 id="statLowAdvanceOrders" style="color: var(--danger);">-</h3>
+            <p style="color: #b91c1c; font-weight: 700;">Low Advance (&lt; ₹5k)</p>
+          </div>
+        </div>
       </div>
 
       <!-- Filters & Instant Search -->
       <div class="filter-panel">
-        <input type="text" id="dashSearch" placeholder="🔍 Search by Order ID, Client Name, or Mobile..." oninput="handleSearchInput()">
+        <input type="text" id="dashSearch" placeholder="🔍 Search Order ID, Client, Mobile, Consultant, Tech..." oninput="handleSearchInput()">
         <select id="dashBranch" onchange="applyFilters()">
           <option value="all">🏢 All Branches</option>
           <option value="mumbai">Mumbai</option>
@@ -634,14 +649,27 @@
           <option value="ahmedabad">Ahmedabad</option>
         </select>
         <select id="dashWearer" onchange="applyFilters()">
-          <option value="all">👥 All Clients</option>
-          <option value="crr">Repeat (CRR)</option>
-          <option value="nbd">New Client (NBD)</option>
+          <option value="all">👥 All Lifecycle Stages</option>
+          <option value="nbd">🆕 1st Order (NBD)</option>
+          <option value="nbd_crr">🔄 NBD Package Repeat (NBD CRR)</option>
+          <option value="repeat_order">🔁 Repeat Client (Repeat Order)</option>
+          <option value="repeat_crr">🔁 Repeat Package Repeat (Repeat CRR)</option>
+        </select>
+        <select id="dashWorkType" onchange="applyFilters()">
+          <option value="all">⚙️ All Work Types</option>
+          <option value="regular">Regular (Stock)</option>
+          <option value="local">Local Custom (Salon)</option>
+          <option value="semi">Semi Custom (Kolkata)</option>
+          <option value="custom">Custom Order (International)</option>
+        </select>
+        <select id="dashConsultant" onchange="applyFilters()">
+          <option value="all">👤 All Consultants</option>
         </select>
         <select id="dashPayment" onchange="applyFilters()">
           <option value="all">💳 All Payments</option>
-          <option value="pending">Balance Pending</option>
-          <option value="paid">Fully Paid</option>
+          <option value="low_adv">🚨 Low Advance Alert (&lt; ₹5k)</option>
+          <option value="pending">⏳ Balance Pending</option>
+          <option value="paid">✅ Fully Paid</option>
         </select>
         <div class="filter-meta" id="dashFilterCount">Loading orders...</div>
       </div>
@@ -760,7 +788,11 @@
                 <input type="text" id="orderDate" name="orderDate" placeholder="DD/MM/YYYY">
               </div>
             </div>
-            <div class="grid-3">
+            <div class="grid-4">
+              <div class="form-group">
+                <label>Form Filled By</label>
+                <input type="text" id="formFilledBy" name="formFilledBy" placeholder="Staff Name">
+              </div>
               <div class="form-group">
                 <label>Consultation By</label>
                 <input type="text" id="consultationBy" name="consultationBy">
@@ -776,11 +808,13 @@
             </div>
             <div class="grid-2">
               <div class="form-group">
-                <label>Existing Wearer</label>
+                <label>Existing Wearer / Lifecycle Stage</label>
                 <select id="existingWearer" name="existingWearer">
-                  <option value="NBD">NBD (New Booking / First Time Wearer)</option>
-                  <option value="CRR">CRR (Repeat Client)</option>
-                  <option value="Repeat CRR">Repeat CRR</option>
+                  <option value="NBD">🆕 1st Order (NBD)</option>
+                  <option value="NBD CRR">🔄 NBD Package Repeat (NBD CRR)</option>
+                  <option value="Repeat Order">🔁 Repeat Client (Repeat Order)</option>
+                  <option value="Repeat CRR">🔁 Repeat Package Repeat (Repeat CRR)</option>
+                  <option value="CRR">CRR (Legacy)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -991,7 +1025,7 @@
               </div>
             </div>
 
-            <div class="grid-3">
+            <div class="grid-4">
               <div class="form-group">
                 <label>Work Type</label>
                 <select id="workType" name="workType">
@@ -999,6 +1033,17 @@
                   <option value="LOCAL CUSTOM (6,000/-)">LOCAL CUSTOM (6,000/-)</option>
                   <option value="SEMI CUSTOM (10,000/-)">SEMI CUSTOM (10,000/-)</option>
                   <option value="CUSTOM (15,000/-)">CUSTOM (15,000/-)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Density %</label>
+                <select id="densityPercentage" name="densityPercentage">
+                  <option value="">Standard / None</option>
+                  <option value="60%">60% (Super Light)</option>
+                  <option value="80%">80% (Light)</option>
+                  <option value="100%">100% (Medium Light / Normal)</option>
+                  <option value="120%">120% (Medium Heavy)</option>
+                  <option value="180%">180% (Heavy Density)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -1429,6 +1474,7 @@
         const data = await res.json();
         if (data.success && Array.isArray(data.orders)) {
           allOrders = data.orders;
+          populateConsultantFilter();
           calculateStats();
           applyFilters();
         } else {
@@ -1443,21 +1489,87 @@
     // Calculate Summary Stats
     function calculateStats() {
       const total = allOrders.length;
-      let crr = 0, nbd = 0, pending = 0;
+      let crr = 0, nbd = 0, pending = 0, lowAdv = 0;
 
       allOrders.forEach(o => {
         const w = (o.existingWearer || '').toLowerCase();
         if (w.includes('crr') || w.includes('repeat')) crr++;
         else nbd++;
 
+        const totalAmt = parseFloat(o.totalBillAmount) || 0;
+        const advAmt = parseFloat(o.advancePaid) || 0;
         const bal = parseFloat(o.balancePayable) || 0;
         if (bal > 0) pending++;
+        if (totalAmt > 0 && advAmt < 5000) lowAdv++;
       });
 
       document.getElementById('statTotalOrders').innerText = total.toLocaleString('en-IN');
       document.getElementById('statCrrOrders').innerText = crr.toLocaleString('en-IN');
       document.getElementById('statNbdOrders').innerText = nbd.toLocaleString('en-IN');
       document.getElementById('statPendingBal').innerText = pending.toLocaleString('en-IN');
+      const lowAdvEl = document.getElementById('statLowAdvanceOrders');
+      if (lowAdvEl) lowAdvEl.innerText = lowAdv.toLocaleString('en-IN');
+    }
+
+    function filterByLowAdvance() {
+      const paySelect = document.getElementById('dashPayment');
+      if (paySelect) {
+        paySelect.value = 'low_adv';
+        applyFilters();
+        const fp = document.querySelector('.filter-panel');
+        if (fp) fp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function populateConsultantFilter() {
+      const select = document.getElementById('dashConsultant');
+      if (!select) return;
+      const currentVal = select.value;
+      const consultants = new Set();
+      allOrders.forEach(o => {
+        const c = (o.consultationBy || '').trim();
+        if (c && c.length > 1) consultants.add(c);
+      });
+      const sorted = Array.from(consultants).sort();
+      select.innerHTML = '<option value="all">👤 All Consultants</option>' +
+        sorted.map(c => `<option value="${escapeHtml(c.toLowerCase())}">${escapeHtml(c)}</option>`).join('');
+      if (currentVal && sorted.some(c => c.toLowerCase() === currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    // Helper: Client Lifecycle Stage Info
+    function getLifecycleBadge(wRaw) {
+      const w = (wRaw || '').toLowerCase();
+      if (w.includes('nbd') || w.includes('new')) {
+        if (w.includes('crr') || w.includes('repeat')) {
+          return '<span class="badge badge-nbd-crr">🔄 NBD CRR (Pkg 2/3)</span>';
+        }
+        return '<span class="badge badge-nbd">🆕 NBD (1st Order)</span>';
+      }
+      if (w.includes('repeat crr') || (w.includes('crr') && (w.includes('unit') || w.includes('pkg')))) {
+        return '<span class="badge badge-repeat-crr">🔁 Repeat CRR (Pkg 2/3)</span>';
+      }
+      if (w.includes('crr') || w.includes('repeat')) {
+        return '<span class="badge badge-crr">🔁 Repeat Order</span>';
+      }
+      return '<span class="badge badge-nbd">🆕 NBD (1st Order)</span>';
+    }
+
+    // Helper: Work Type Badge
+    function getWorkTypeBadge(wtRaw) {
+      const wt = (wtRaw || '').toLowerCase();
+      if (!wt || wt.includes('regular') || wt.includes('standard')) return '';
+      if (wt.includes('local')) {
+        return '<span class="badge" style="background:#fef3c7; color:#92400e; margin-top:3px; display:inline-block;">Local Custom (Salon)</span>';
+      }
+      if (wt.includes('semi')) {
+        return '<span class="badge" style="background:#fce7f3; color:#9d174d; margin-top:3px; display:inline-block;">Semi Custom (Kolkata)</span>';
+      }
+      if (wt.includes('custom')) {
+        return '<span class="badge" style="background:#ffedd5; color:#c2410c; margin-top:3px; display:inline-block;">Custom Order (Intl)</span>';
+      }
+      return `<span class="badge badge-gray" style="margin-top:3px; display:inline-block;">${escapeHtml(wtRaw)}</span>`;
     }
 
     // Live Instant Search & Filters
@@ -1471,15 +1583,19 @@
       const search = (document.getElementById('dashSearch').value || '').trim().toLowerCase();
       const branch = document.getElementById('dashBranch').value;
       const wearer = document.getElementById('dashWearer').value;
+      const workType = document.getElementById('dashWorkType') ? document.getElementById('dashWorkType').value : 'all';
+      const consultant = document.getElementById('dashConsultant') ? document.getElementById('dashConsultant').value : 'all';
       const payment = document.getElementById('dashPayment').value;
 
       filteredOrders = allOrders.filter(o => {
-        // Search filter
+        // Search filter (Order ID, Client Name, Phone, Consultant, Tech)
         if (search) {
           const matchId = (o.orderNumber || '').toLowerCase().includes(search);
           const matchClient = (o.clientName || '').toLowerCase().includes(search);
           const matchPhone = (o.contactNo || '').includes(search);
-          if (!matchId && !matchClient && !matchPhone) return false;
+          const matchConsult = (o.consultationBy || '').toLowerCase().includes(search);
+          const matchTech = (o.technicianName || '').toLowerCase().includes(search);
+          if (!matchId && !matchClient && !matchPhone && !matchConsult && !matchTech) return false;
         }
 
         // Branch filter
@@ -1487,18 +1603,51 @@
           if (!(o.branch || '').toLowerCase().includes(branch)) return false;
         }
 
-        // Wearer filter
+        // Wearer / Lifecycle filter (4 stages)
         if (wearer !== 'all') {
           const w = (o.existingWearer || '').toLowerCase();
-          if (wearer === 'crr' && !(w.includes('crr') || w.includes('repeat'))) return false;
-          if (wearer === 'nbd' && (w.includes('crr') || w.includes('repeat'))) return false;
+          if (wearer === 'nbd') {
+            if (!((w.includes('nbd') || w.includes('new')) && !(w.includes('crr') || w.includes('repeat')))) return false;
+          } else if (wearer === 'nbd_crr') {
+            if (!((w.includes('nbd') || w.includes('new')) && (w.includes('crr') || w.includes('repeat')))) return false;
+          } else if (wearer === 'repeat_order') {
+            if (!((w.includes('repeat') || w.includes('crr')) && !(w.includes('nbd') || w.includes('new')))) return false;
+          } else if (wearer === 'repeat_crr') {
+            if (!(w.includes('repeat crr') || (w.includes('crr') && !w.includes('nbd')))) return false;
+          }
+        }
+
+        // Work Type filter
+        if (workType !== 'all') {
+          const wt = (o.workType || '').toLowerCase();
+          if (workType === 'regular') {
+            if (!(wt === 'regular' || wt.includes('standard') || !wt)) return false;
+          } else if (workType === 'local') {
+            if (!wt.includes('local')) return false;
+          } else if (workType === 'semi') {
+            if (!wt.includes('semi')) return false;
+          } else if (workType === 'custom') {
+            if (!(wt.includes('custom') && !wt.includes('local') && !wt.includes('semi'))) return false;
+          }
+        }
+
+        // Consultant filter
+        if (consultant !== 'all') {
+          if (!(o.consultationBy || '').toLowerCase().includes(consultant)) return false;
         }
 
         // Payment status filter
         if (payment !== 'all') {
+          const total = parseFloat(o.totalBillAmount) || 0;
+          const adv = parseFloat(o.advancePaid) || 0;
           const bal = parseFloat(o.balancePayable) || 0;
-          if (payment === 'pending' && bal <= 0) return false;
-          if (payment === 'paid' && bal > 0) return false;
+          if (payment === 'low_adv') {
+            if (!(total > 0 && adv < 5000)) return false;
+          } else if (payment === 'pending') {
+            if (bal <= 0) return false;
+          } else if (payment === 'paid') {
+            if (bal > 0) return false;
+          }
         }
 
         return true;
@@ -1527,27 +1676,34 @@
       const pageData = filteredOrders.slice(start, end);
 
       tbody.innerHTML = pageData.map(o => {
-        const isCrr = (o.existingWearer || '').toLowerCase().includes('crr') || (o.existingWearer || '').toLowerCase().includes('repeat');
-        const wearerBadge = isCrr ? `<span class="badge badge-crr">CRR (Repeat)</span>` : `<span class="badge badge-nbd">NBD (New)</span>`;
+        const wearerBadge = getLifecycleBadge(o.existingWearer);
+        const workTypeBadge = getWorkTypeBadge(o.workType);
 
         const totalAmt = parseFloat(o.totalBillAmount) || 0;
         const advAmt = parseFloat(o.advancePaid) || 0;
         const balAmt = parseFloat(o.balancePayable) || 0;
+        const isLowAdv = totalAmt > 0 && advAmt < 5000;
+
         const payBadge = balAmt <= 0
           ? `<span class="badge badge-paid">Paid Full</span>`
           : `<span class="badge badge-pending">Bal: ₹${balAmt.toLocaleString('en-IN')}</span>`;
+
+        const lowAdvBadge = isLowAdv
+          ? `<div style="margin-top:3px;"><span class="badge badge-danger" title="⚠️ HOLD: Advance under ₹5,000 - Do Not Dispatch">⚠️ HOLD (&lt; ₹5k Adv)</span></div>`
+          : '';
 
         const pdfBtn = o.pdfUrl
           ? `<a href="${o.pdfUrl}" target="_blank" class="btn btn-outline btn-sm" title="Open Drive PDF">📄 PDF</a>`
           : `<span style="color:#cbd5e1; font-size:12px;">None</span>`;
 
-        const specsPreview = [o.size, o.baseType, o.hairLength].filter(Boolean).join(' • ') || '-';
+        const specsParts = [o.size, o.baseType, o.densityPercentage ? (o.densityPercentage + ' Density') : o.density, o.hairLength].filter(Boolean);
+        const specsPreview = specsParts.join(' • ') || '-';
 
         return `
           <tr>
             <td>
               <div style="font-weight:700; color:var(--primary);">${escapeHtml(o.orderNumber || '-')}</div>
-              <div style="margin-top:2px;">${wearerBadge}</div>
+              <div style="margin-top:3px;">${wearerBadge}</div>
             </td>
             <td style="white-space:nowrap; color:var(--text-muted); font-size:12px;">${escapeHtml(o.orderDate || '-')}</td>
             <td>
@@ -1555,14 +1711,22 @@
               <div class="client-clickable" onclick="openClientHistory('${escapeHtml(o.contactNo)}', '${escapeHtml(o.clientName)}')" title="Click to view all past orders for this client">
                 📞 ${escapeHtml(o.contactNo || '-')}
               </div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                👤 ${escapeHtml(o.consultationBy || 'No Consultant')}
+              </div>
+              ${o.formFilledBy ? `<div style="font-size:10px; color:#64748b;">📝 Filled: ${escapeHtml(o.formFilledBy)}</div>` : ''}
             </td>
             <td><span class="badge badge-gray">${escapeHtml(o.branch || 'Mumbai')}</span></td>
             <td>
               <div><strong>₹${totalAmt.toLocaleString('en-IN')}</strong></div>
               <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Adv: ₹${advAmt.toLocaleString('en-IN')}</div>
               <div style="margin-top:3px;">${payBadge}</div>
+              ${lowAdvBadge}
             </td>
-            <td style="font-size:12px; color:var(--text-muted); max-width:180px;">${escapeHtml(specsPreview)}</td>
+            <td style="font-size:12px; color:var(--text-muted); max-width:200px;">
+              <div>${escapeHtml(specsPreview)}</div>
+              ${workTypeBadge}
+            </td>
             <td>${pdfBtn}</td>
             <td style="text-align: right; white-space:nowrap;">
               <button class="btn btn-primary btn-sm" onclick="editOrderDirectly('${escapeHtml(o.orderNumber)}')" style="margin-right:4px;">✏️ Edit</button>
