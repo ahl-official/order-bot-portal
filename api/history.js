@@ -10,8 +10,12 @@ module.exports = async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const forceRefresh = url.searchParams.get('forceRefresh') === 'true';
     const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+    const orderNumber = (url.searchParams.get('orderNumber') || url.searchParams.get('id') || url.searchParams.get('orderId') || '').trim().toLowerCase();
 
-    const logs = await getAuditLogs({ forceRefresh, limit });
+    let logs = await getAuditLogs({ forceRefresh, limit });
+    if (orderNumber) {
+      logs = logs.filter(l => (l.orderNumber || '').toLowerCase() === orderNumber);
+    }
 
     return res.status(200).json({
       success: true,

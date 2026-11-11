@@ -438,9 +438,23 @@ async function getAuditLogs(options = {}) {
     const orderNumber = String(r[3] || '').trim();
     if (!timestamp && !orderNumber) continue;
 
+    const remarks = String(r[92] || r[28] || '').trim();
+    let editor = 'Staff';
+    const editorMatch = remarks.match(/\[Portal Edit by ([^\]]+)\]/i);
+    if (editorMatch) editor = editorMatch[1].trim();
+
+    const orderData = {};
+    headers.forEach((h, colIdx) => {
+      const fieldKey = HEADER_TO_FIELD[String(h || '').trim().toLowerCase()];
+      if (fieldKey && r[colIdx] !== undefined) {
+        orderData[fieldKey] = String(r[colIdx] || '').trim();
+      }
+    });
+
     logs.push({
       rowIndex: i + 1,
       timestamp,
+      editor,
       clientName,
       contactNo,
       orderNumber,
@@ -457,7 +471,8 @@ async function getAuditLogs(options = {}) {
       baseType: String(r[41] || '').trim(),
       hairLength: String(r[58] || '').trim(),
       pdfUrl: String(r[84] || '').trim(),
-      remarks: String(r[92] || r[28] || '').trim()
+      remarks,
+      orderData
     });
   }
 

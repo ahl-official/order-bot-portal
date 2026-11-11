@@ -725,11 +725,24 @@
           <span id="bannerBranch" style="color: var(--text-muted); font-weight: 600;"></span>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" id="btnOrderVersions" onclick="openOrderVersionsModal()" title="View previous edit history and rollback mistakes for this order">📜 Version History</button>
           <div id="drivePdfLinkWrapper" style="display:none;">
             <a id="drivePdfLink" href="#" target="_blank" class="btn btn-outline btn-sm">📄 View Drive PDF</a>
           </div>
           <button type="button" class="btn btn-warning btn-sm" onclick="cloneAsRepeatOrder()">🔁 Create Repeat (CRR)</button>
         </div>
+      </div>
+
+      <!-- Rollback Status Banner -->
+      <div id="rollbackBanner" style="display:none; background:#fef3c7; border:1.5px solid #f59e0b; border-radius:8px; padding:12px 18px; margin-bottom:18px; color:#92400e; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <strong style="color:#b45309;">⏪ Version Rollback Loaded:</strong>
+          <span id="rollbackBannerText" style="margin-left:4px; font-weight:600;">Showing past snapshot...</span>
+          <div style="font-size:12px; margin-top:3px; color:#78350f;">
+            Inspect restored values across the tabs below. Click <strong>"Save Changes (PIN Required)"</strong> to overwrite the current order with this version.
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="cancelRollback()">✕ Cancel / Reload Live</button>
       </div>
 
       <!-- Quick Finder Bar inside Editor -->
@@ -1341,6 +1354,7 @@
             <thead>
               <tr>
                 <th>Timestamp</th>
+                <th>Edited By</th>
                 <th>Order #</th>
                 <th>Client Name & Contact</th>
                 <th>Branch</th>
@@ -1348,11 +1362,12 @@
                 <th>Bill / Advance</th>
                 <th>Change Summary & Remarks</th>
                 <th>Drive PDF</th>
+                <th style="text-align:right;">Action</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
               <tr>
-                <td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">
+                <td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">
                   <div class="spinner"></div>
                   <div style="margin-top:8px;">Loading audit logs...</div>
                 </td>
@@ -1409,6 +1424,39 @@
             </tr>
           </thead>
           <tbody id="clientHistoryTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Versions & Revert Modal -->
+  <div class="modal-backdrop" id="orderVersionsModal">
+    <div class="modal-box modal-box-lg">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <div>
+          <h3 id="versionsModalTitle" style="margin-bottom:2px;">📜 Order Edit History & Rollback</h3>
+          <p id="versionsModalSubtitle" style="margin-bottom:0; font-size:12px; color:var(--text-muted);">
+            Previous copies recorded before each edit. You can inspect differences and restore any past version to fix mistakes.
+          </p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="closeOrderVersionsModal()">✕ Close</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Edited By</th>
+              <th>Change Summary</th>
+              <th>Financials</th>
+              <th>Drive PDF</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="orderVersionsTableBody">
             <!-- Dynamically populated -->
           </tbody>
         </table>
@@ -2032,28 +2080,166 @@
     function renderHistoryTable(logs) {
       const tbody = document.getElementById('historyTableBody');
       if (logs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">No matching log entries found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--text-muted);">No matching log entries found.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = logs.map(l => `
-        <tr>
-          <td style="font-size:12px; white-space:nowrap; color:var(--text-muted); font-weight:600;">${escapeHtml(l.timestamp || '-')}</td>
-          <td><strong>${escapeHtml(l.orderNumber || '-')}</strong></td>
-          <td>
-            <div style="font-weight:700;">${escapeHtml(l.clientName || 'Client')}</div>
-            <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(l.contactNo || '')}</div>
-          </td>
-          <td><span class="badge badge-gray">${escapeHtml(l.branch || 'Mumbai')}</span></td>
-          <td><span class="badge badge-crr">${escapeHtml(l.existingWearer || 'CRR')}</span></td>
-          <td>
-            <div>₹${(parseFloat(l.totalBillAmount) || 0).toLocaleString('en-IN')}</div>
-            <div style="font-size:11px; color:var(--text-muted);">Adv: ₹${(parseFloat(l.advancePaid) || 0).toLocaleString('en-IN')}</div>
-          </td>
-          <td style="font-size:12px; max-width:260px;">${escapeHtml(l.remarks || 'Order updated')}</td>
-          <td>${l.pdfUrl ? `<a href="${l.pdfUrl}" target="_blank" class="btn btn-outline btn-sm">📄 PDF</a>` : '-'}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = logs.map((l, idx) => {
+        const editorBadge = l.editor && l.editor.toLowerCase() === 'roshani'
+          ? `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">👤 Roshani</span>`
+          : (l.editor && l.editor.toLowerCase() === 'zoya'
+            ? `<span class="badge" style="background:#fce7f3; color:#be185d; font-weight:700;">👤 Zoya</span>`
+            : `<span class="badge badge-gray">👤 ${escapeHtml(l.editor || 'Staff')}</span>`);
+
+        return `
+          <tr>
+            <td style="font-size:12px; white-space:nowrap; color:var(--text-muted); font-weight:600;">${escapeHtml(l.timestamp || '-')}</td>
+            <td>${editorBadge}</td>
+            <td><strong style="color:var(--primary);">${escapeHtml(l.orderNumber || '-')}</strong></td>
+            <td>
+              <div style="font-weight:700;">${escapeHtml(l.clientName || 'Client')}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(l.contactNo || '')}</div>
+            </td>
+            <td><span class="badge badge-gray">${escapeHtml(l.branch || 'Mumbai')}</span></td>
+            <td><span class="badge badge-crr">${escapeHtml(l.existingWearer || 'CRR')}</span></td>
+            <td>
+              <div>₹${(parseFloat(l.totalBillAmount) || 0).toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:var(--text-muted);">Adv: ₹${(parseFloat(l.advancePaid) || 0).toLocaleString('en-IN')}</div>
+            </td>
+            <td style="font-size:12px; max-width:240px;">${escapeHtml(l.remarks || 'Order updated')}</td>
+            <td>${l.pdfUrl ? `<a href="${l.pdfUrl}" target="_blank" class="btn btn-outline btn-sm">📄 PDF</a>` : '-'}</td>
+            <td style="text-align:right;">
+              <button class="btn btn-warning btn-sm" onclick="restoreFromHistory(${idx})" title="Load this historical version into the editor to rollback">
+                ⏪ Restore
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Version History & Rollback System
+    let currentOrderVersions = [];
+
+    async function openOrderVersionsModal() {
+      const orderId = document.getElementById('orderNumber').value;
+      if (!orderId) {
+        alert('Please load an order first into the editor to inspect its version history.');
+        return;
+      }
+      document.getElementById('versionsModalTitle').innerText = `📜 Version History: ${orderId}`;
+      const tbody = document.getElementById('orderVersionsTableBody');
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px;"><div class="spinner"></div><div style="margin-top:8px;">Loading edit history...</div></td></tr>`;
+      document.getElementById('orderVersionsModal').style.display = 'flex';
+
+      try {
+        const res = await fetch(`/api/history?orderNumber=${encodeURIComponent(orderId)}&forceRefresh=true`);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.logs)) {
+          currentOrderVersions = json.logs;
+          renderOrderVersions(currentOrderVersions);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No edit history found for this order.</td></tr>`;
+        }
+      } catch (err) {
+        console.error('Error fetching order versions:', err);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--danger);">Error loading version history.</td></tr>`;
+      }
+    }
+
+    function closeOrderVersionsModal() {
+      document.getElementById('orderVersionsModal').style.display = 'none';
+    }
+
+    function renderOrderVersions(versions) {
+      const tbody = document.getElementById('orderVersionsTableBody');
+      if (versions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No edit versions recorded yet for this order. Changes made via portal will appear here.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = versions.map((v, idx) => {
+        const editorBadge = v.editor && v.editor.toLowerCase() === 'roshani'
+          ? `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">👤 Roshani</span>`
+          : (v.editor && v.editor.toLowerCase() === 'zoya'
+            ? `<span class="badge" style="background:#fce7f3; color:#be185d; font-weight:700;">👤 Zoya</span>`
+            : `<span class="badge badge-gray">👤 ${escapeHtml(v.editor || 'Staff')}</span>`);
+
+        const pdfLink = v.pdfUrl
+          ? `<a href="${v.pdfUrl}" target="_blank" class="btn btn-outline btn-sm">📄 View PDF</a>`
+          : '-';
+
+        return `
+          <tr>
+            <td style="font-size:12px; white-space:nowrap; font-weight:600; color:var(--text-muted);">${escapeHtml(v.timestamp)}</td>
+            <td>${editorBadge}</td>
+            <td style="font-size:12px; max-width:260px;">${escapeHtml(v.remarks || 'Edit snapshot')}</td>
+            <td>
+              <div style="font-weight:700;">₹${(parseFloat(v.totalBillAmount) || 0).toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:var(--text-muted);">Adv: ₹${(parseFloat(v.advancePaid) || 0).toLocaleString('en-IN')}</div>
+            </td>
+            <td>${pdfLink}</td>
+            <td style="text-align:right;">
+              <button class="btn btn-warning btn-sm" onclick="restoreOrderVersion(${idx})" title="Load this snapshot into editor to rollback mistake">
+                ⏪ Restore this Version
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function restoreOrderVersion(idx) {
+      const v = currentOrderVersions[idx];
+      if (!v) return;
+      if (!confirm(`Restore order ${v.orderNumber} to the version saved on ${v.timestamp} by ${v.editor}?\n\nThis will load all specifications from that version into the form. You can review them and click "Save Changes (PIN Required)" to apply.`)) {
+        return;
+      }
+
+      closeOrderVersionsModal();
+
+      // Populate form with snapshot data
+      if (v.orderData && Object.keys(v.orderData).length > 0) {
+        populateForm(v.orderData);
+      } else {
+        populateForm(v);
+      }
+
+      // Display rollback indicator
+      const banner = document.getElementById('rollbackBanner');
+      if (banner) {
+        banner.style.display = 'flex';
+        document.getElementById('rollbackBannerText').innerText = `Restored copy from ${v.timestamp} by ${v.editor}. (${v.remarks || 'Historical snapshot'})`;
+      }
+      document.getElementById('saveStatusIndicator').innerText = `Restored (${v.editor} copy)`;
+      alert(`✅ Previous copy from ${v.timestamp} by ${v.editor} loaded into the form!\n\nPlease inspect across the tabs, then click "Save Changes (PIN Required)" to set this version as the active order in Google Sheets and Drive.`);
+    }
+
+    function restoreFromHistory(index) {
+      const log = allHistory[index];
+      if (!log) return;
+      if (!confirm(`Restore order ${log.orderNumber} to the snapshot from ${log.timestamp} by ${log.editor || 'Staff'}?\n\nThis will open the editor with these exact restored details so you can review and save.`)) {
+        return;
+      }
+      switchView('editor');
+      if (log.orderData && Object.keys(log.orderData).length > 0) {
+        populateForm(log.orderData);
+      } else {
+        populateForm(log);
+      }
+      const banner = document.getElementById('rollbackBanner');
+      if (banner) {
+        banner.style.display = 'flex';
+        document.getElementById('rollbackBannerText').innerText = `Restored copy from ${log.timestamp} by ${log.editor || 'Staff'}. (${log.remarks || 'Historical snapshot'})`;
+      }
+      document.getElementById('saveStatusIndicator').innerText = `Restored (${log.editor || 'Staff'} copy)`;
+    }
+
+    function cancelRollback() {
+      const orderId = document.getElementById('orderNumber').value;
+      const banner = document.getElementById('rollbackBanner');
+      if (banner) banner.style.display = 'none';
+      if (orderId) lookupOrder(orderId);
     }
 
     function filterHistoryTable() {
