@@ -657,10 +657,10 @@
         </select>
         <select id="dashWorkType" onchange="applyFilters()">
           <option value="all">⚙️ All Work Types</option>
-          <option value="regular">Regular (Stock)</option>
-          <option value="local">Local Custom (Salon)</option>
-          <option value="semi">Semi Custom (Kolkata)</option>
-          <option value="custom">Custom Order (International)</option>
+          <option value="regular">Regular</option>
+          <option value="local">Local Custom</option>
+          <option value="semi">Semi Custom</option>
+          <option value="custom">Custom Order</option>
         </select>
         <select id="dashConsultant" onchange="applyFilters()">
           <option value="all">👤 All Consultants</option>
@@ -889,13 +889,11 @@
               </div>
               <div class="form-group">
                 <label>Hairstyle</label>
-                <input type="text" id="hairstyle" name="hairstyle" list="hairstyleOptions" placeholder="e.g. Freestyle, Left Parting, Right Parting">
+                <input type="text" id="hairstyle" name="hairstyle" list="hairstyleOptions" placeholder="e.g. Freestyle, Left, Right">
                 <datalist id="hairstyleOptions">
                   <option value="Freestyle">
-                  <option value="Left Parting">
-                  <option value="Right Parting">
-                  <option value="Back Brush">
-                  <option value="Exposed">
+                  <option value="Left">
+                  <option value="Right">
                 </datalist>
               </div>
             </div>
@@ -1057,21 +1055,21 @@
               <div class="form-group">
                 <label>Work Type</label>
                 <select id="workType" name="workType">
-                  <option value="REGULAR (NO EXTRA)">REGULAR (NO EXTRA)</option>
-                  <option value="LOCAL CUSTOM (6,000/-)">LOCAL CUSTOM (6,000/-)</option>
-                  <option value="SEMI CUSTOM (10,000/-)">SEMI CUSTOM (10,000/-)</option>
-                  <option value="CUSTOM (15,000/-)">CUSTOM (15,000/-)</option>
+                  <option value="REGULAR">REGULAR</option>
+                  <option value="LOCAL CUSTOM">LOCAL CUSTOM</option>
+                  <option value="SEMI CUSTOM">SEMI CUSTOM</option>
+                  <option value="CUSTOM">CUSTOM</option>
                 </select>
               </div>
               <div class="form-group">
                 <label>Density %</label>
                 <select id="densityPercentage" name="densityPercentage">
                   <option value="">Standard / None</option>
-                  <option value="60%">60% (Super Light)</option>
-                  <option value="80%">80% (Light)</option>
-                  <option value="100%">100% (Medium Light / Normal)</option>
-                  <option value="120%">120% (Medium Heavy)</option>
-                  <option value="180%">180% (Heavy Density)</option>
+                  <option value="60%">60%</option>
+                  <option value="80%">80%</option>
+                  <option value="100%">100%</option>
+                  <option value="120%">120%</option>
+                  <option value="180%">180%</option>
                 </select>
               </div>
               <div class="form-group">
@@ -1665,15 +1663,16 @@
       const wt = (wtRaw || '').toLowerCase();
       if (!wt || wt.includes('regular') || wt.includes('standard')) return '';
       if (wt.includes('local')) {
-        return '<span class="badge" style="background:#fef3c7; color:#92400e; margin-top:3px; display:inline-block;">Local Custom (Salon)</span>';
+        return '<span class="badge" style="background:#fef3c7; color:#92400e; margin-top:3px; display:inline-block;">Local Custom</span>';
       }
       if (wt.includes('semi')) {
-        return '<span class="badge" style="background:#fce7f3; color:#9d174d; margin-top:3px; display:inline-block;">Semi Custom (Kolkata)</span>';
+        return '<span class="badge" style="background:#fce7f3; color:#9d174d; margin-top:3px; display:inline-block;">Semi Custom</span>';
       }
       if (wt.includes('custom')) {
-        return '<span class="badge" style="background:#ffedd5; color:#c2410c; margin-top:3px; display:inline-block;">Custom Order (Intl)</span>';
+        return '<span class="badge" style="background:#ffedd5; color:#c2410c; margin-top:3px; display:inline-block;">Custom Order</span>';
       }
-      return `<span class="badge badge-gray" style="margin-top:3px; display:inline-block;">${escapeHtml(wtRaw)}</span>`;
+      const cleanLabel = wtRaw.replace(/\(.*?\)/g, '').trim();
+      return `<span class="badge badge-gray" style="margin-top:3px; display:inline-block;">${escapeHtml(cleanLabel || wtRaw)}</span>`;
     }
 
     // Live Instant Search & Filters
