@@ -26,6 +26,23 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing orderNumber in payload.' });
     }
 
+    // Sanitize numeric fields: strip any trailing .0 and format phone numbers
+    if (orderData.contactNo) {
+      orderData.contactNo = String(orderData.contactNo).replace(/\.0+$/, '').replace(/\D/g, '').slice(-10);
+    }
+    const numericKeys = ['totalBillAmount', 'advancePaid', 'balancePayable', 'unitCost', 'noOfUnits', 'rushOrderCharges', 'gstAmountCharged'];
+    for (const nk of numericKeys) {
+      if (orderData[nk] !== undefined && orderData[nk] !== null) {
+        orderData[nk] = String(orderData[nk]).replace(/\.0+$/, '').trim();
+      }
+    }
+    // Auto-calculate unitCost if missing
+    const totalNum = parseFloat(orderData.totalBillAmount) || 0;
+    const unitsNum = parseInt(orderData.noOfUnits, 10) || 1;
+    if ((!orderData.unitCost || orderData.unitCost === '0') && totalNum > 0) {
+      orderData.unitCost = String(Math.round(totalNum / unitsNum));
+    }
+
     // 1. Find existing row in Google Sheets
     const existing = await lookupOrder(orderNumber);
     if (!existing) {
@@ -48,12 +65,21 @@ module.exports = async (req, res) => {
     // 4. Log Audit
     await logAudit(orderNumber, editorName || 'Staff', changeSummary, orderData);
 
-    // 5. Update/Regenerate PDF in Google Drive
-    const updatedPdfUrl = await syncPdfToDrive(orderData);
-    if (updatedPdfUrl) {
-      orderData.pdfUrl = updatedPdfUrl;
-      await updateOrderRow(existing.rowIndex, { pdfUrl: updatedPdfUrl });
+    // 5. Update/Regenerate PDF in Google Drive or Live PDF route
+    let updatedPdfUrl = null;
+    try {
+      updatedPdfUrl = await syncPdfToDrive(orderData);
+    } catch (driveErr) {
+      console.warn('Drive sync warning:', driveErr.message);
     }
+
+    // Always provide live printable PDF route as direct updated URL
+    const livePdfUrl = `/api/pdf?orderNumber=${encodeURIComponent(orderNumber)}`;
+    if (!updatedPdfUrl || updatedPdfUrl.includes('drive.google.com/file/d//view')) {
+      updatedPdfUrl = livePdfUrl;
+    }
+    orderData.pdfUrl = updatedPdfUrl;
+    await updateOrderRow(existing.rowIndex, { pdfUrl: updatedPdfUrl });
 
     // 6. Send WhatsApp Updated Copy Notification
     const clientPhone = orderData.contactNo || existing.orderData.contactNo;

@@ -261,7 +261,13 @@ async function lookupOrder(query) {
       headers.forEach((h, colIdx) => {
         const key = HEADER_TO_FIELD[String(h || '').trim().toLowerCase()];
         if (key) {
-          orderData[key] = row[colIdx] || '';
+          let v = row[colIdx] || '';
+          if (key === 'contactNo') {
+            v = String(v).replace(/\.0+$/, '').replace(/\D/g, '').slice(-10);
+          } else if (['totalBillAmount', 'advancePaid', 'balancePayable', 'unitCost', 'noOfUnits', 'rushOrderCharges'].includes(key)) {
+            v = String(v).replace(/\.0+$/, '').trim();
+          }
+          orderData[key] = v;
         }
       });
       return {
@@ -352,6 +358,8 @@ async function getAllOrders(options = {}) {
   const cWearer = col(/existing\s*wearer/i, 10);
   const cBranch = col(/branch/i, 11);
   const cTotal = col(/total\s*bill/i, 22);
+  const cUnitCost = col(/unit\s*cost/i, 23);
+  const cUnits = col(/no\s*of\s*units/i, 25);
   const cAdvance = col(/advance\s*paid/i, 26);
   const cBalance = col(/balance\s*payable/i, 27);
   const cPaymentDoneBy = col(/payment\s*done\s*by/i, 21);
@@ -374,19 +382,24 @@ async function getAllOrders(options = {}) {
     const clientName = String(r[cClient] || '').trim();
     if (!orderNum && !clientName) continue;
 
+    const cleanNum = v => String(v || '').replace(/\.0+$/, '').trim();
+    const cleanPhone = v => String(v || '').replace(/\.0+$/, '').replace(/\D/g, '').slice(-10);
+
     orders.push({
       rowIndex: i + 1,
       orderNumber: orderNum,
       clientName,
-      contactNo: String(r[cPhone] || '').trim(),
+      contactNo: cleanPhone(r[cPhone]),
       city: String(r[cCity] || '').trim(),
       orderDate: String(r[cOrderDate] || '').trim(),
       deliveryDate: String(r[cDeliveryDate] || '').trim(),
       existingWearer: String(r[cWearer] || '').trim(),
       branch: String(r[cBranch] || '').trim(),
-      totalBillAmount: String(r[cTotal] || '0').trim(),
-      advancePaid: String(r[cAdvance] || '0').trim(),
-      balancePayable: String(r[cBalance] || '0').trim(),
+      totalBillAmount: cleanNum(r[cTotal]) || '0',
+      unitCost: cleanNum(cUnitCost !== -1 ? r[cUnitCost] : '') || '0',
+      noOfUnits: cleanNum(cUnits !== -1 ? r[cUnits] : '') || '1',
+      advancePaid: cleanNum(r[cAdvance]) || '0',
+      balancePayable: cleanNum(r[cBalance]) || '0',
       paymentDoneBy: String(r[cPaymentDoneBy] || '').trim(),
       size: String(r[cSize] || '').trim(),
       baseType: String(r[cBaseType] || '').trim(),

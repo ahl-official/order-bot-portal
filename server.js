@@ -26,6 +26,7 @@ const saveHandler = require('./api/save');
 const repeatHandler = require('./api/repeat');
 const ordersHandler = require('./api/orders');
 const historyHandler = require('./api/history');
+const pdfHandler = require('./api/pdf');
 
 const PORT = process.env.PORT || 3000;
 
@@ -66,6 +67,13 @@ const server = http.createServer(async (req, res) => {
   // Routing API requests
   if (pathname === '/api/orders') {
     return ordersHandler(req, res);
+  }
+  if (pathname === '/api/pdf') {
+    res.send = (html) => {
+      res.end(html);
+      return res;
+    };
+    return pdfHandler(req, res);
   }
   if (pathname === '/api/history') {
     return historyHandler(req, res);

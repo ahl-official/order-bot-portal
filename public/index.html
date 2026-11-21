@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHL Central Order Management & Edit Portal</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="apple-touch-icon" href="/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -644,11 +642,9 @@
           <option value="mumbai">Mumbai</option>
           <option value="delhi">Delhi</option>
           <option value="bangalore">Bangalore</option>
-          <option value="hyderabad">Hyderabad</option>
-          <option value="kolkata">Kolkata</option>
-          <option value="chennai">Chennai</option>
-          <option value="pune">Pune</option>
-          <option value="ahmedabad">Ahmedabad</option>
+          <option value="online">Online (Courier)</option>
+          <option value="local custom">Local Custom</option>
+          <option value="semi custom">Semi Custom</option>
         </select>
         <select id="dashWearer" onchange="applyFilters()">
           <option value="all">👥 All Lifecycle Stages</option>
@@ -728,8 +724,9 @@
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button type="button" class="btn btn-outline btn-sm" id="btnOrderVersions" onclick="openOrderVersionsModal()" title="View previous edit history and rollback mistakes for this order">📜 Version History</button>
+          <a id="livePdfLink" href="#" target="_blank" class="btn btn-primary btn-sm" style="display:none; text-decoration:none;">🖨️ View / Print Live PDF</a>
           <div id="drivePdfLinkWrapper" style="display:none;">
-            <a id="drivePdfLink" href="#" target="_blank" class="btn btn-outline btn-sm">📄 View Drive PDF</a>
+            <a id="drivePdfLink" href="#" target="_blank" class="btn btn-outline btn-sm">📄 Drive PDF</a>
           </div>
           <button type="button" class="btn btn-warning btn-sm" onclick="cloneAsRepeatOrder()">🔁 Create Repeat (CRR)</button>
         </div>
@@ -789,13 +786,11 @@
                 <label>Branch</label>
                 <select id="branch" name="branch">
                   <option value="Mumbai">Mumbai</option>
-                  <option value="Delhi">Delhi</option>
                   <option value="Bangalore">Bangalore</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Kolkata">Kolkata</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Ahmedabad">Ahmedabad</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Online">Online (Courier)</option>
+                  <option value="Local Custom">Local Custom</option>
+                  <option value="Semi Custom">Semi Custom</option>
                 </select>
               </div>
               <div class="form-group">
@@ -920,22 +915,26 @@
         <div id="tab-payment" class="tab-content">
           <div class="form-card">
             <div class="card-title">💳 Section 3: Payment & Accounting</div>
-            <div class="grid-4">
+            <div class="grid-5" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:12px;">
               <div class="form-group">
                 <label>Total Bill Amount (₹) *</label>
-                <input type="number" id="totalBillAmount" name="totalBillAmount" oninput="calculateBalance()" required>
+                <input type="number" id="totalBillAmount" name="totalBillAmount" oninput="calculateBalance('total')" required>
+              </div>
+              <div class="form-group">
+                <label>Unit Cost (₹)</label>
+                <input type="number" id="unitCost" name="unitCost" placeholder="Cost per unit" oninput="calculateBalance('unitCost')">
+              </div>
+              <div class="form-group">
+                <label>Number of Units</label>
+                <input type="number" id="noOfUnits" name="noOfUnits" min="1" max="20" value="1" oninput="calculateBalance('units')">
               </div>
               <div class="form-group">
                 <label>Advance Paid (₹) *</label>
-                <input type="number" id="advancePaid" name="advancePaid" oninput="calculateBalance()" required>
+                <input type="number" id="advancePaid" name="advancePaid" oninput="calculateBalance('advance')" required>
               </div>
               <div class="form-group">
                 <label>Balance Payable (₹)</label>
                 <input type="number" id="balancePayable" name="balancePayable" readonly style="background:#f1f5f9; font-weight:700;">
-              </div>
-              <div class="form-group">
-                <label>Number of Units</label>
-                <input type="number" id="noOfUnits" name="noOfUnits" min="1" max="20" value="1" oninput="calculateBalance()">
               </div>
             </div>
 
@@ -1786,9 +1785,12 @@
           ? `<div style="margin-top:3px;"><span class="badge badge-danger" title="⚠️ HOLD: Advance under ₹5,000 - Do Not Dispatch">⚠️ HOLD (&lt; ₹5k Adv)</span></div>`
           : '';
 
-        const pdfBtn = o.pdfUrl
-          ? `<a href="${o.pdfUrl}" target="_blank" class="btn btn-outline btn-sm" title="Open Drive PDF">📄 PDF</a>`
-          : `<span style="color:#cbd5e1; font-size:12px;">None</span>`;
+        const unitAmt = parseFloat(o.unitCost) || (totalAmt > 0 ? Math.round(totalAmt / (parseInt(o.noOfUnits, 10) || 1)) : 0);
+
+        const pdfBtn = `<div style="display:flex; gap:4px; flex-wrap:wrap;">`
+          + `<a href="/api/pdf?orderNumber=${encodeURIComponent(o.orderNumber)}" target="_blank" class="btn btn-outline btn-sm" style="color:var(--primary); font-weight:600;" title="Open live printable order sheet">🖨️ PDF</a>`
+          + (o.pdfUrl && !o.pdfUrl.startsWith('/api/') ? `<a href="${o.pdfUrl}" target="_blank" class="btn btn-outline btn-sm" title="Open Drive PDF" style="font-size:11px;">Drive</a>` : '')
+          + `</div>`;
 
         const specsParts = [o.size, o.baseType, o.densityPercentage ? (o.densityPercentage + ' Density') : o.density, o.hairLength].filter(Boolean);
         const specsPreview = specsParts.join(' • ') || '-';
@@ -1813,6 +1815,7 @@
             <td><span class="badge badge-gray">${escapeHtml(o.branch || 'Mumbai')}</span></td>
             <td>
               <div><strong>₹${totalAmt.toLocaleString('en-IN')}</strong></div>
+              ${unitAmt > 0 ? `<div style="font-size:11px; color:#475569;">Unit: ₹${unitAmt.toLocaleString('en-IN')}</div>` : ''}
               <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Adv: ₹${advAmt.toLocaleString('en-IN')}</div>
               <div style="margin-top:3px;">${payBadge}</div>
               ${lowAdvBadge}
@@ -1879,7 +1882,12 @@
     }
 
     function populateForm(data) {
-      for (const [key, val] of Object.entries(data)) {
+      for (let [key, val] of Object.entries(data)) {
+        if (key === 'contactNo') {
+          val = String(val || '').replace(/\.0+$/, '').replace(/\D/g, '').slice(-10);
+        } else if (['totalBillAmount', 'advancePaid', 'balancePayable', 'unitCost', 'noOfUnits', 'rushOrderCharges', 'gstAmountCharged'].includes(key)) {
+          val = String(val || '').replace(/\.0+$/, '').trim();
+        }
         const el = document.getElementById(key);
         if (el) el.value = val || '';
       }
@@ -1891,6 +1899,13 @@
       document.getElementById('bannerClientName').innerText = data.clientName || 'Unnamed';
       document.getElementById('bannerBranch').innerText = data.branch ? `(${data.branch})` : '';
 
+      // Live Printable PDF link
+      const liveLink = document.getElementById('livePdfLink');
+      if (liveLink && data.orderNumber) {
+        liveLink.href = `/api/pdf?orderNumber=${encodeURIComponent(data.orderNumber)}`;
+        liveLink.style.display = 'inline-flex';
+      }
+
       if (data.pdfUrl) {
         document.getElementById('drivePdfLinkWrapper').style.display = 'block';
         document.getElementById('drivePdfLink').href = data.pdfUrl;
@@ -1900,11 +1915,24 @@
       calculateBalance();
     }
 
-    // Balance & GST Math
-    function calculateBalance() {
-      const total = parseFloat(document.getElementById('totalBillAmount').value) || 0;
-      const advance = parseFloat(document.getElementById('advancePaid').value) || 0;
+    // Balance & Unit Cost Math
+    function calculateBalance(source) {
+      let total = parseFloat(document.getElementById('totalBillAmount').value) || 0;
+      let unitCost = parseFloat(document.getElementById('unitCost').value) || 0;
       const units = parseInt(document.getElementById('noOfUnits').value, 10) || 1;
+      const advance = parseFloat(document.getElementById('advancePaid').value) || 0;
+
+      if (source === 'unitCost' && unitCost > 0) {
+        total = unitCost * units;
+        document.getElementById('totalBillAmount').value = total;
+      } else if ((source === 'total' || source === 'units') && total > 0 && units > 0) {
+        unitCost = Math.round(total / units);
+        document.getElementById('unitCost').value = unitCost;
+      } else if (!unitCost && total > 0 && units > 0) {
+        unitCost = Math.round(total / units);
+        document.getElementById('unitCost').value = unitCost;
+      }
+
       const balance = Math.max(0, total - advance);
       document.getElementById('balancePayable').value = balance;
 
@@ -1969,6 +1997,14 @@
           if (json.pdfUrl) {
             document.getElementById('drivePdfLinkWrapper').style.display = 'block';
             document.getElementById('drivePdfLink').href = json.pdfUrl;
+          }
+          const orderNum = payload.orderData?.orderNumber;
+          if (orderNum) {
+            const liveLink = document.getElementById('livePdfLink');
+            if (liveLink) {
+              liveLink.href = `/api/pdf?orderNumber=${encodeURIComponent(orderNum)}`;
+              liveLink.style.display = 'inline-flex';
+            }
           }
           // Refresh dashboard data in background
           loadAllOrders(true);
