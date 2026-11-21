@@ -3,21 +3,21 @@ const { requestGoogle } = require('./google');
 function buildOrderHtml(d) {
   const orderNum = d.orderNumber || d['Order Number'] || 'AHL-XXXX';
   const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const val = (k, altKey = '', f = '') => {
+  const val = (k, altKey = '', f = '—') => {
     let x = d[k];
     if (x === undefined || x === null || String(x).trim() === '') {
       if (altKey) x = d[altKey];
     }
     return (x === undefined || x === null || String(x).trim() === '') ? f : esc(x);
   };
-  const amount = (k, altKey = '', f = '') => {
+  const amount = (k, altKey = '', f = '—') => {
     let x = d[k];
     if (x === undefined || x === null || String(x).trim() === '') {
       if (altKey) x = d[altKey];
     }
     if (x === undefined || x === null || String(x).trim() === '') return f;
     const n = Number(String(x).replace(/[^0-9.-]/g, ''));
-    return Number.isFinite(n) ? n.toLocaleString('en-IN') : esc(x);
+    return Number.isFinite(n) ? ('₹ ' + n.toLocaleString('en-IN')) : esc(x);
   };
 
   function getDriveDirectImg(url) {
@@ -30,14 +30,14 @@ function buildOrderHtml(d) {
   }
 
   const mediaFields = [
-    ['Front photo', 'uploadClientPhotoFront', 'Upload Client Photo - Front'],
-    ['Top photo', 'uploadClientPhotoTop', 'Upload Client Photo - Top'],
-    ['Left photo', 'uploadClientPhotoLeft', 'Upload Client Photo - Left'],
-    ['Right photo', 'uploadClientPhotoRight', 'Upload Client Photo - Right'],
-    ['Back photo', 'uploadClientPhotoBack', 'Upload Client Photo - Back'],
-    ['Mould picture', 'clientMouldPhoto', 'Client Mould Photo'],
-    ['Demo unit picture', 'demoPicture', 'Demo Picture'],
-    ['Client after demo', 'clientConsentFormPage1', 'Client Consent Form Page 1']
+    ['Front Photo', 'uploadClientPhotoFront', 'Upload Client Photo - Front'],
+    ['Top Photo', 'uploadClientPhotoTop', 'Upload Client Photo - Top'],
+    ['Left Photo', 'uploadClientPhotoLeft', 'Upload Client Photo - Left'],
+    ['Right Photo', 'uploadClientPhotoRight', 'Upload Client Photo - Right'],
+    ['Back Photo', 'uploadClientPhotoBack', 'Upload Client Photo - Back'],
+    ['Mould Picture', 'clientMouldPhoto', 'Client Mould Photo'],
+    ['Demo Unit', 'demoPicture', 'Demo Picture'],
+    ['Consent / After Demo', 'clientConsentFormPage1', 'Client Consent Form Page 1']
   ];
 
   const activePhotos = mediaFields.map(([label, k1, k2]) => {
@@ -67,125 +67,125 @@ function buildOrderHtml(d) {
     }
     photoTableHtml = '<table border="0" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:6px;border:none;">' + rowsHtml + '</table>';
   } else {
-    photoTableHtml = '<p style="font-size:8pt;margin:6px 0;color:#64748b;">No client photos attached.</p>';
+    photoTableHtml = '<p style="font-size:8pt;margin:6px 0;color:#64748b;">No client photos attached to this order.</p>';
   }
 
   const html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
     + '<title>Order Form - ' + esc(orderNum) + '</title>'
     + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
     + '<style>'
-    + '@page { size: A4 portrait; margin: 0; }'
     + '* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }'
-    + 'html, body { margin: 0; padding: 0; background: #525659; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.18; color: #000; }'
-    + '.a4-container { display: flex; flex-direction: column; align-items: center; padding: 24px 0 40px 0; gap: 24px; }'
-    + '.a4-page { width: 210mm; min-height: 297mm; height: 297mm; background: #ffffff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); padding: 11mm 15mm 11mm 15mm; position: relative; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }'
-    + '.page-content { flex: 1; display: flex; flex-direction: column; }'
-    + '.page-footer { border-top: 1px solid #cbd5e1; padding-top: 4px; margin-top: 4px; font-size: 7.5pt; color: #64748b; display: flex; justify-content: space-between; align-items: center; }'
-    + 'table, tr, td, th { border: none !important; border-width: 0 !important; outline: none !important; }'
-    + '.title { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 4px 0; letter-spacing: 0.5px; text-transform: uppercase; color: #0f172a; }'
-    + '.bar-blue { border-top: 1.5px solid #2b6cb0; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; font-weight: bold; font-size: 8.5pt; padding: 1.5px 0; margin: 3px 0 2px 0; text-transform: uppercase; letter-spacing: 0.3px; }'
-    + '.bar-red { border-top: 1.5px solid #cc0000; border-bottom: 1.5px solid #cc0000; color: #cc0000; font-weight: bold; font-size: 8.5pt; padding: 1.5px 0; margin: 3px 0 2px 0; text-transform: uppercase; letter-spacing: 0.3px; }'
-    + '.table-data { width: 100%; border-collapse: collapse; margin-bottom: 2px; border: none !important; }'
-    + '.table-data td { padding: 0.5px 0; font-size: 8pt; font-weight: bold; vertical-align: top; line-height: 1.15; border: none !important; }'
-    + '.table-data td.lbl { width: 250px; color: #1e293b; }'
-    + '.table-data td.val { color: #000; }'
-    + '.notes-box { padding: 1.5px 0; margin: 2px 0; font-size: 8pt; font-weight: bold; line-height: 1.15; border: none !important; color: #1e293b; }'
-    + '.double-line { border-bottom: 2px double #2b6cb0; margin: 3px 0 2px 0; }'
+    + 'html, body { margin: 0; padding: 0; background: #ffffff; color: #111827; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.22; }'
+    + '.page { background: #ffffff; padding: 12mm 15mm; page-break-after: always; break-after: page; }'
+    + '.page:last-child { page-break-after: auto; break-after: auto; }'
+    + '.header-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; border-bottom: 2px solid #0f172a; padding-bottom: 4px; }'
+    + '.header-title { font-size: 15pt; font-weight: 800; color: #0f172a; letter-spacing: 1px; text-transform: uppercase; }'
+    + '.header-sub { font-size: 8pt; color: #64748b; font-weight: 600; margin-top: 2px; }'
+    + '.header-badge { background: #1e3a8a; color: #ffffff; font-weight: 800; font-size: 11pt; padding: 4px 12px; border-radius: 4px; text-align: center; }'
+    + '.bar-blue { background: #1e3a8a; color: #ffffff; font-weight: bold; font-size: 8.5pt; padding: 3px 8px; margin: 6px 0 3px 0; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 2px; }'
+    + '.bar-red { background: #991b1b; color: #ffffff; font-weight: bold; font-size: 8.5pt; padding: 3px 8px; margin: 6px 0 3px 0; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 2px; }'
+    + 'table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }'
+    + 'table.data-table td { padding: 2px 4px; font-size: 8pt; font-weight: bold; vertical-align: top; border-bottom: 1px solid #f1f5f9; }'
+    + 'table.data-table td.lbl { width: 230px; color: #475569; }'
+    + 'table.data-table td.val { color: #0f172a; }'
+    + '.notes-box { background: #f8fafc; border-left: 3px solid #3b82f6; padding: 4px 8px; margin: 4px 0; font-size: 8pt; font-weight: bold; color: #1e293b; }'
+    + '.notes-box-red { background: #fef2f2; border-left: 3px solid #ef4444; padding: 4px 8px; margin: 4px 0; font-size: 8pt; font-weight: bold; color: #991b1b; }'
+    + '.footer-table { width: 100%; border-collapse: collapse; margin-top: 10px; border-top: 1px solid #cbd5e1; padding-top: 4px; }'
+    + '.footer-table td { font-size: 7.5pt; color: #64748b; font-weight: 600; padding: 4px 0; border: none !important; }'
+    + '@media screen {'
+    + '  body { background: #525659; padding: 20px 0; }'
+    + '  .page { width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4); }'
+    + '}'
     + '@media print {'
-    + '  html, body { background: transparent !important; margin: 0 !important; padding: 0 !important; }'
-    + '  .a4-container { padding: 0 !important; gap: 0 !important; }'
-    + '  .a4-page { width: 210mm !important; height: 297mm !important; min-height: 297mm !important; margin: 0 !important; padding: 11mm 15mm 11mm 15mm !important; box-shadow: none !important; page-break-after: always !important; break-after: page !important; }'
+    + '  body { background: #ffffff !important; padding: 0 !important; }'
+    + '  .page { width: 100% !important; margin: 0 !important; padding: 12mm 15mm !important; box-shadow: none !important; }'
     + '  #printToolbar { display: none !important; }'
     + '}'
     + '</style></head><body>'
-    + '<div class="a4-container">'
 
     // ==================== PAGE 1 ====================
-    + '<div class="a4-page" id="page-1">'
-    + '<div class="page-content">'
-    + '<div class="title">Order Form</div>'
-    + '<div class="bar-blue">Client Details</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
-    + '<tr><td class="lbl">Name :</td><td class="val">' + val('clientName', 'Client Name') + '</td></tr>'
-    + '<tr><td class="lbl">Order No :</td><td class="val">' + esc(orderNum) + '</td></tr>'
+    + '<div class="page" id="page-1">'
+    + '<table class="header-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr>'
+    + '<td><div class="header-title">American Hairline</div><div class="header-sub">Official Client Order Form &bull; System Specification</div></td>'
+    + '<td align="right"><div class="header-badge">' + esc(orderNum) + '</div></td>'
+    + '</tr>'
+    + '</table>'
+
+    + '<div class="bar-blue">Client &amp; Order Details</div>'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr><td class="lbl">Client Name :</td><td class="val">' + val('clientName', 'Client Name') + '</td></tr>'
+    + '<tr><td class="lbl">Contact Mobile :</td><td class="val">' + val('contactNo', 'Contact No') + '</td></tr>'
+    + '<tr><td class="lbl">Order Number :</td><td class="val">' + esc(orderNum) + '</td></tr>'
     + '<tr><td class="lbl">City :</td><td class="val">' + val('city', 'City') + '</td></tr>'
-    + '<tr><td class="lbl">City Other :</td><td class="val">' + val('cityOther', 'City Other') + '</td></tr>'
+    + '<tr><td class="lbl">Branch :</td><td class="val">' + val('branch', 'Branch') + '</td></tr>'
     + '<tr><td class="lbl">Order Date :</td><td class="val">' + val('orderDate', 'Order Date') + '</td></tr>'
     + '<tr><td class="lbl">Delivery Date :</td><td class="val">' + val('deliveryDate', 'Delivery Date') + '</td></tr>'
     + '<tr><td class="lbl">Consultation By :</td><td class="val">' + val('consultationBy', 'Consultation By') + '</td></tr>'
-    + '<tr><td class="lbl">Patch no :</td><td class="val">' + val('patchNo', 'Patch No', '1') + '</td></tr>'
-    + '<tr><td class="lbl">Existing Wearer :</td><td class="val">' + val('existingWearer', 'Existing Wearer') + '</td></tr>'
-    + '<tr><td class="lbl">Branch :</td><td class="val">' + val('branch', 'Branch') + '</td></tr>'
     + '<tr><td class="lbl">Technician Name :</td><td class="val">' + val('technicianName', 'Technician Name') + '</td></tr>'
     + '<tr><td class="lbl">Demo Given By :</td><td class="val">' + val('demoGivenBy', 'Demo Given By') + '</td></tr>'
+    + '<tr><td class="lbl">Patch No :</td><td class="val">' + val('patchNo', 'Patch No', '1') + '</td></tr>'
+    + '<tr><td class="lbl">Existing Wearer / Stage :</td><td class="val">' + val('existingWearer', 'Existing Wearer') + '</td></tr>'
     + '<tr><td class="lbl">Standard :</td><td class="val">' + val('standard', 'Standard') + '</td></tr>'
     + '</table>'
 
     + '<div class="bar-blue">As Discussed In Consultation</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Client Preference :</td><td class="val">' + val('clientPreference', 'Client Preference') + '</td></tr>'
-    + '<tr><td class="lbl">Density :</td><td class="val">' + val('consultDensity', 'Density (Consultant)') + '</td></tr>'
-    + '<tr><td class="lbl">Hairline :</td><td class="val">' + val('consultHairline', 'Hairline (Consultant)') + '</td></tr>'
+    + '<tr><td class="lbl">Density (Consultant) :</td><td class="val">' + val('consultDensity', 'Density (Consultant)') + '</td></tr>'
+    + '<tr><td class="lbl">Hairline (Consultant) :</td><td class="val">' + val('consultHairline', 'Hairline (Consultant)') + '</td></tr>'
     + '<tr><td class="lbl">Hairstyle :</td><td class="val">' + val('hairstyle', 'Hairstyle') + '</td></tr>'
-    + '<tr><td class="lbl">Base :</td><td class="val">' + val('consultBase', 'Base (Consultant)') + '</td></tr>'
-    + '<tr><td class="lbl">Life :</td><td class="val">' + val('life', 'Life (in Months)') + '</td></tr>'
+    + '<tr><td class="lbl">Base (Consultant) :</td><td class="val">' + val('consultBase', 'Base (Consultant)') + '</td></tr>'
+    + '<tr><td class="lbl">Expected Life :</td><td class="val">' + val('life', 'Life (in Months)') + '</td></tr>'
     + '</table>'
-    + '<div class="notes-box">Notes 1: ' + val('notes1', 'Notes 1 (From Consultant)', 'None') + '</div>'
+    + '<div class="notes-box">Consultant Notes: ' + val('notes1', 'Notes 1 (From Consultant)', 'None') + '</div>'
 
-    + '<div class="bar-blue">Payment Details</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
+    + '<div class="bar-blue">Payment &amp; Commercial Details</div>'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Payment Done By :</td><td class="val">' + val('paymentDoneBy', 'Payment Done By') + '</td></tr>'
-    + '<tr><td class="lbl">Total Bill amt :</td><td class="val">' + amount('totalBillAmount', 'Total Bill Amount') + '</td></tr>'
-    + '<tr><td class="lbl">Unit cost :</td><td class="val">' + amount('unitCost', 'Unit Cost') + '</td></tr>'
-    + '<tr><td class="lbl">Rush Order :</td><td class="val">' + amount('rushOrderCharges', 'Rush Order Charges') + '</td></tr>'
+    + '<tr><td class="lbl">Total Bill Amount :</td><td class="val">' + amount('totalBillAmount', 'Total Bill Amount') + '</td></tr>'
+    + '<tr><td class="lbl">Unit Cost :</td><td class="val">' + amount('unitCost', 'Unit Cost') + '</td></tr>'
+    + '<tr><td class="lbl">Rush Order Charges :</td><td class="val">' + amount('rushOrderCharges', 'Rush Order Charges') + '</td></tr>'
     + '<tr><td class="lbl">No of Units Booked :</td><td class="val">' + val('noOfUnits', 'No of Units Booked', '1') + '</td></tr>'
     + '<tr><td class="lbl">Advance Paid :</td><td class="val">' + amount('advancePaid', 'Advance Paid') + '</td></tr>'
     + '<tr><td class="lbl">Balance Payable :</td><td class="val">' + amount('balancePayable', 'Balance Payable') + '</td></tr>'
     + '<tr><td class="lbl">GST Percentage (%) :</td><td class="val">' + val('gstPercentage', 'GST Percentage') + '</td></tr>'
     + '<tr><td class="lbl">GST Amount Charged :</td><td class="val">' + amount('gstAmountCharged', 'GST Amount Charged') + '</td></tr>'
-    + '<tr><td class="lbl">1st :</td><td class="val">' + amount('emi1Amount', 'Emi 1 Amount') + '</td></tr>'
-    + '<tr><td class="lbl">Date :</td><td class="val">' + val('emi1Date', 'Emi 1 Date') + '</td></tr>'
-    + '<tr><td class="lbl">2nd :</td><td class="val">' + amount('emi2Amount', 'Emi 2 Amount') + '</td></tr>'
-    + '<tr><td class="lbl">Date :</td><td class="val">' + val('emi2Date', 'Emi 2 Date') + '</td></tr>'
-    + '<tr><td class="lbl">3rd :</td><td class="val">' + amount('emi3Amount', 'Emi 3 Amount') + '</td></tr>'
-    + '<tr><td class="lbl">Date :</td><td class="val">' + val('emi3Date', 'Emi 3 Date') + '</td></tr>'
+    + '<tr><td class="lbl">EMI 1 / Date :</td><td class="val">' + amount('emi1Amount', 'Emi 1 Amount') + (d.emi1Date ? (' (' + esc(d.emi1Date) + ')') : '') + '</td></tr>'
+    + '<tr><td class="lbl">EMI 2 / Date :</td><td class="val">' + amount('emi2Amount', 'Emi 2 Amount') + (d.emi2Date ? (' (' + esc(d.emi2Date) + ')') : '') + '</td></tr>'
+    + '<tr><td class="lbl">EMI 3 / Date :</td><td class="val">' + amount('emi3Amount', 'Emi 3 Amount') + (d.emi3Date ? (' (' + esc(d.emi3Date) + ')') : '') + '</td></tr>'
     + '</table>'
-    + '<div class="notes-box">Notes 2: ' + val('notes2', 'Notes 2 (Payment Details)', 'None') + '</div>'
-    + '<div style="font-weight: bold; margin: 3px 0 2px 0; font-size: 8pt;">Client type - ' + val('clientStatus', 'Client Status', 'REGULAR') + '</div>'
-    + '<div class="double-line"></div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
-    + '<tr><td class="lbl">Pic Taken :</td><td class="val">' + val('picTaken', 'Pic Taken') + '</td></tr>'
-    + '<tr><td class="lbl">Reason :</td><td class="val">' + val('picTakenReason', 'Pic Not Taken Reason') + '</td></tr>'
-    + '<tr><td class="lbl">Video Taken :</td><td class="val">' + val('videoTaken', 'Video Taken') + '</td></tr>'
+    + '<div class="notes-box">Payment Notes: ' + val('notes2', 'Notes 2 (Payment Details)', 'None') + '</div>'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr><td class="lbl">Client Type :</td><td class="val">' + val('clientStatus', 'Client Status', 'REGULAR') + '</td></tr>'
+    + '<tr><td class="lbl">Pic Taken :</td><td class="val">' + val('picTaken', 'Pic Taken') + (d.picTakenReason ? (' (Reason: ' + esc(d.picTakenReason) + ')') : '') + '</td></tr>'
+    + '<tr><td class="lbl">Video Taken :</td><td class="val">' + val('videoTaken', 'Video Taken') + (d.videoTakenReason ? (' (Reason: ' + esc(d.videoTakenReason) + ')') : '') + '</td></tr>'
     + '</table>'
-    + '</div>'
-    + '<div class="page-footer">'
-    + '<span>American Hairline &bull; Confidential Order Record</span>'
-    + '<span>' + esc(orderNum) + ' &bull; Page 1 of 3</span>'
-    + '</div>'
-    + '</div>'
+
+    + '<table class="footer-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr>'
+    + '<td>American Hairline Pvt. Ltd. &bull; Confidential Order Record</td>'
+    + '<td align="right">' + esc(orderNum) + ' &bull; Page 1 of 3</td>'
+    + '</tr>'
+    + '</table>'
+    + '</div>' // end page 1
 
     // ==================== PAGE 2 ====================
-    + '<div class="a4-page" id="page-2">'
-    + '<div class="page-content">'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
-    + '<tr><td class="lbl">Reason :</td><td class="val">' + val('videoTakenReason', 'Video Not Taken Reason') + '</td></tr>'
-    + '<tr><td class="lbl">Mould Taken :</td><td class="val">' + val('mouldTaken', 'Mould Taken') + '</td></tr>'
-    + '<tr><td class="lbl">Reason :</td><td class="val">' + val('mouldTakenReason', 'Mould Not Taken Reason') + '</td></tr>'
-    + '<tr><td class="lbl">Picture of Demo Unit :</td><td class="val">' + val('picDemoUnit', 'Picture of Demo unit') + '</td></tr>'
-    + '<tr><td class="lbl">Reason :</td><td class="val">' + val('picDemoUnitReason', 'Picture Demo Not Taken Reason') + '</td></tr>'
-    + '<tr><td class="lbl">Client Picture After Given Demo :</td><td class="val">' + val('clientPicAfterDemo', 'Client picture after given demo') + '</td></tr>'
-    + '<tr><td class="lbl">Reason :</td><td class="val">' + val('clientPicAfterDemoReason', 'Client Pic Not Taken Reason') + '</td></tr>'
+    + '<div class="page" id="page-2">'
+    + '<table class="header-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr>'
+    + '<td><div class="header-title">American Hairline</div><div class="header-sub">Technical Specifications &amp; Assessment</div></td>'
+    + '<td align="right"><div class="header-badge">' + esc(orderNum) + '</div></td>'
+    + '</tr>'
     + '</table>'
 
-    + '<div class="bar-red">Client Specification</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
+    + '<div class="bar-red">Client Specifications</div>'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Size :</td><td class="val">' + val('size', 'Size') + '</td></tr>'
-    + '<tr><td class="lbl">Size Other :</td><td class="val">' + val('sizeOther', 'Size Other') + '</td></tr>'
     + '<tr><td class="lbl">Base Type :</td><td class="val">' + val('baseType', 'Base Type') + '</td></tr>'
     + '<tr><td class="lbl">Code :</td><td class="val">' + val('code', 'Code') + '</td></tr>'
     + '<tr><td class="lbl">Colour :</td><td class="val">' + val('colour', 'Colour') + '</td></tr>'
-    + '<tr><td class="lbl">Colour Other :</td><td class="val">' + val('targetColour', 'Target Colour') + '</td></tr>'
+    + '<tr><td class="lbl">Target Colour :</td><td class="val">' + val('targetColour', 'Target Colour') + '</td></tr>'
     + '<tr><td class="lbl">Grey (%) :</td><td class="val">' + val('grey', 'Grey (%)') + '</td></tr>'
     + '<tr><td class="lbl">Hairline of System :</td><td class="val">' + val('hairlineSystem', 'Hairline of system') + '</td></tr>'
     + '<tr><td class="lbl">Bleach Knots :</td><td class="val">' + val('blechKnots', 'Blech Knots') + '</td></tr>'
@@ -194,68 +194,88 @@ function buildOrderHtml(d) {
     + '<tr><td class="lbl">Air Lace Amy :</td><td class="val">' + val('airLaceAmy', 'Air Lace Amy') + '</td></tr>'
     + '<tr><td class="lbl">Air Lace Nancy :</td><td class="val">' + val('airLaceNancy', 'Air Lace Nancy') + '</td></tr>'
     + '<tr><td class="lbl">Type of Density :</td><td class="val">' + val('typeOfDensity', 'Type of Density') + '</td></tr>'
+    + '<tr><td class="lbl">Colour on System :</td><td class="val">' + val('colorOnSystem', 'Color On System', val('colour', 'Colour')) + '</td></tr>'
+    + '<tr><td class="lbl">Colour on Client Hair :</td><td class="val">' + val('colorOnClients', 'Color On Clients', val('colour', 'Colour')) + '</td></tr>'
     + '</table>'
-    + '<div class="notes-box">Notes 3: ' + val('notes3', 'Notes 3 (Client Specifications)', 'None') + '</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
-    + '<tr><td class="lbl">Colour On System :</td><td class="val">' + val('colorOnSystem', 'Color On System', val('colour', 'Colour')) + '</td></tr>'
-    + '<tr><td class="lbl">Colour On Client :</td><td class="val">' + val('colorOnClients', 'Color On Clients', val('colour', 'Colour')) + '</td></tr>'
-    + '</table>'
+    + '<div class="notes-box-red">Specification Notes: ' + val('notes3', 'Notes 3 (Client Specifications)', 'None') + '</div>'
 
     + '<div class="bar-red">To Do Afterwork</div>'
-    + '<div class="notes-box">To Do Afterwork: ' + val('toDoAfterwork', 'To Do Afterwork', 'None') + '</div>'
+    + '<div class="notes-box-red">Afterwork Required: ' + val('toDoAfterwork', 'To Do Afterwork', 'None') + '</div>'
 
-    + '<div class="bar-blue">Pg. 3</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
-    + '<tr><td class="lbl">Density :</td><td class="val">' + val('density', 'Density (Technician)', val('consultDensity', 'Density (Consultant)')) + '</td></tr>'
+    + '<div class="bar-blue">Technician Assessment &amp; Measurements</div>'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr><td class="lbl">Density (Technician) :</td><td class="val">' + val('density', 'Density (Technician)', val('consultDensity', 'Density (Consultant)')) + '</td></tr>'
     + '<tr><td class="lbl">Hair Length :</td><td class="val">' + val('hairLength', 'Hair Length') + '</td></tr>'
-    + '<tr><td class="lbl">Top :</td><td class="val">' + val('top', 'Top') + '</td></tr>'
-    + '<tr><td class="lbl">Front :</td><td class="val">' + val('front', 'Front') + '</td></tr>'
-    + '<tr><td class="lbl">Side :</td><td class="val">' + val('side', 'Side') + '</td></tr>'
-    + '<tr><td class="lbl">Back :</td><td class="val">' + val('back', 'Back') + '</td></tr>'
+    + '<tr><td class="lbl">Measurements (Top / Front) :</td><td class="val">' + val('top', 'Top') + ' / ' + val('front', 'Front') + '</td></tr>'
+    + '<tr><td class="lbl">Measurements (Side / Back) :</td><td class="val">' + val('side', 'Side') + ' / ' + val('back', 'Back') + '</td></tr>'
     + '<tr><td class="lbl">Parting :</td><td class="val">' + val('parting', 'Parting') + '</td></tr>'
-    + '<tr><td class="lbl">Hairline :</td><td class="val">' + val('techHairline', 'Hairline (Technician)', val('consultHairline', 'Hairline (Consultant)')) + '</td></tr>'
+    + '<tr><td class="lbl">Hairline (Technician) :</td><td class="val">' + val('techHairline', 'Hairline (Technician)', val('consultHairline', 'Hairline (Consultant)')) + '</td></tr>'
     + '<tr><td class="lbl">Hairline Shape :</td><td class="val">' + val('hairlineShape', 'Hairline shape') + '</td></tr>'
-    + '<tr><td class="lbl">Colour To Use On System :</td><td class="val">' + val('colourToUseOnSystem', 'Colour To use on system', val('colour', 'Colour')) + '</td></tr>'
-    + '<tr><td class="lbl">Color on Hair Head :</td><td class="val">' + val('colourOnHairHead', 'Colour on Hair Head', val('colour', 'Colour')) + '</td></tr>'
-    + '<tr><td class="lbl">Client Hairline :</td><td class="val">' + val('clientHairline', 'Client Hairline') + '</td></tr>'
     + '<tr><td class="lbl">Base Hairline :</td><td class="val">' + val('baseHairline', 'Base Hairline') + '</td></tr>'
-    + '<tr><td class="lbl">Type Client :</td><td class="val">' + val('typeOfClient', 'Type of Client', 'Not Fussy') + '</td></tr>'
-    + '<tr><td class="lbl">Bleach Knots :</td><td class="val">' + val('blechKnots', 'Blech Knots') + '</td></tr>'
-    + '<tr><td class="lbl">Client Order Like :</td><td class="val">' + val('clientOrderLike', 'Client Order Like') + '</td></tr>'
-    + '<tr><td class="lbl">Client Order Like (Other) :</td><td class="val">' + val('clientOrderLikeOther', 'Client Order Like Other') + '</td></tr>'
+    + '<tr><td class="lbl">Client Hairline :</td><td class="val">' + val('clientHairline', 'Client Hairline') + '</td></tr>'
+    + '<tr><td class="lbl">Colour To Use On System :</td><td class="val">' + val('colourToUseOnSystem', 'Colour To use on system', val('colour', 'Colour')) + '</td></tr>'
+    + '<tr><td class="lbl">Colour on Hair Head :</td><td class="val">' + val('colourOnHairHead', 'Colour on Hair Head', val('colour', 'Colour')) + '</td></tr>'
+    + '<tr><td class="lbl">Client Type :</td><td class="val">' + val('typeOfClient', 'Type of Client', 'Not Fussy') + '</td></tr>'
+    + '<tr><td class="lbl">Client Order Like :</td><td class="val">' + val('clientOrderLike', 'Client Order Like') + (d.clientOrderLikeOther ? (' (' + esc(d.clientOrderLikeOther) + ')') : '') + '</td></tr>'
+    + '<tr><td class="lbl">Mould Taken :</td><td class="val">' + val('mouldTaken', 'Mould Taken') + (d.mouldTakenReason ? (' (Reason: ' + esc(d.mouldTakenReason) + ')') : '') + '</td></tr>'
+    + '<tr><td class="lbl">Picture of Demo Unit :</td><td class="val">' + val('picDemoUnit', 'Picture of Demo unit') + (d.picDemoUnitReason ? (' (Reason: ' + esc(d.picDemoUnitReason) + ')') : '') + '</td></tr>'
+    + '<tr><td class="lbl">Client Picture After Demo :</td><td class="val">' + val('clientPicAfterDemo', 'Client picture after given demo') + (d.clientPicAfterDemoReason ? (' (Reason: ' + esc(d.clientPicAfterDemoReason) + ')') : '') + '</td></tr>'
     + '</table>'
-    + '</div>'
-    + '<div class="page-footer">'
-    + '<span>American Hairline &bull; Confidential Order Record</span>'
-    + '<span>' + esc(orderNum) + ' &bull; Page 2 of 3</span>'
-    + '</div>'
-    + '</div>'
+    + '<div class="notes-box">Technician Notes: ' + val('notes4', 'Notes 4 (Technician)', 'None') + '</div>'
+
+    + '<table class="footer-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr>'
+    + '<td>American Hairline Pvt. Ltd. &bull; Confidential Order Record</td>'
+    + '<td align="right">' + esc(orderNum) + ' &bull; Page 2 of 3</td>'
+    + '</tr>'
+    + '</table>'
+    + '</div>' // end page 2
 
     // ==================== PAGE 3 ====================
-    + '<div class="a4-page" id="page-3">'
-    + '<div class="page-content">'
-    + '<div class="notes-box">Notes 4: ' + val('notes4', 'Notes 4 (Technician)', 'None') + '</div>'
-    + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
-    + '<tr><td class="lbl">As Per Date :</td><td class="val">' + val('asPerDate', 'As per Date') + '</td></tr>'
-    + '<tr><td class="lbl">Hairline Shaped :</td><td class="val">' + val('hairlineShaped', 'Hairline Shaped') + '</td></tr>'
-    + '<tr><td class="lbl">Hairline Shaped 2 :</td><td class="val">' + val('hairlineShaped2', 'Hairline Shaped 2') + '</td></tr>'
-    + '<tr><td class="lbl">Type :</td><td class="val">' + val('clientPreference', 'Client Preference') + '</td></tr>'
+    + '<div class="page" id="page-3">'
+    + '<table class="header-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr>'
+    + '<td><div class="header-title">American Hairline</div><div class="header-sub">Media Documentation &amp; Verification</div></td>'
+    + '<td align="right"><div class="header-badge">' + esc(orderNum) + '</div></td>'
+    + '</tr>'
     + '</table>'
 
     + '<div class="bar-red">Client History</div>'
-    + '<div style="font-weight: bold; margin: 3px 0; font-size: 8pt; color:#475569;">No previous order history available.</div>'
+    + '<table class="data-table" border="0" cellpadding="0" cellspacing="0">'
+    + '<tr><td class="lbl">Existing Wearer / Category :</td><td class="val">' + val('existingWearer', 'Existing Wearer', 'New Client (NBD)') + '</td></tr>'
+    + '<tr><td class="lbl">As Per Date :</td><td class="val">' + val('asPerDate', 'As per Date') + '</td></tr>'
+    + '<tr><td class="lbl">Hairline Shaped :</td><td class="val">' + val('hairlineShaped', 'Hairline Shaped') + '</td></tr>'
+    + '<tr><td class="lbl">Form Filled By :</td><td class="val">' + val('formFilledBy', 'Order Form Filled By', 'Staff') + '</td></tr>'
+    + '</table>'
 
-    + '<div class="bar-blue">Client Photos</div>'
-    + '<div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px; color:#1e293b;">Order #' + esc(orderNum) + ' &bull; ' + val('orderDate', 'Order Date') + '</div>'
+    + '<div class="bar-blue">Client Photos Gallery</div>'
+    + '<div style="font-size: 8pt; font-weight: bold; margin: 4px 0; color: #1e293b;">Order #' + esc(orderNum) + ' &bull; ' + val('clientName', 'Client Name') + ' (' + val('branch', 'Branch') + ')</div>'
     + photoTableHtml
-    + '</div>'
-    + '<div class="page-footer">'
-    + '<span>American Hairline &bull; Confidential Order Record</span>'
-    + '<span>' + esc(orderNum) + ' &bull; Page 3 of 3</span>'
-    + '</div>'
-    + '</div>'
 
-    + '</div>' // end .a4-container
+    + '<div class="bar-blue" style="margin-top: 14px;">Order Verification &amp; Authorization</div>'
+    + '<table style="width: 100%; border-collapse: collapse; margin-top: 8px;">'
+    + '<tr>'
+    + '<td style="width: 50%; padding: 12px 10px; border: 1px dashed #cbd5e1; border-radius: 4px; vertical-align: top;">'
+    + '<div style="font-size: 8pt; font-weight: bold; color: #475569; text-transform: uppercase;">Consultant Sign-off</div>'
+    + '<div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 4px;">' + val('consultationBy', 'Consultation By', 'Consultant') + '</div>'
+    + '<div style="font-size: 7.5pt; color: #94a3b8; margin-top: 16px;">Signature &amp; Date Verified</div>'
+    + '</td>'
+    + '<td style="width: 50%; padding: 12px 10px; border: 1px dashed #cbd5e1; border-radius: 4px; vertical-align: top;">'
+    + '<div style="font-size: 8pt; font-weight: bold; color: #475569; text-transform: uppercase;">Technician Sign-off</div>'
+    + '<div style="font-size: 9pt; font-weight: bold; color: #0f172a; margin-top: 4px;">' + val('technicianName', 'Technician Name', 'Technician') + '</div>'
+    + '<div style="font-size: 7.5pt; color: #94a3b8; margin-top: 16px;">Signature &amp; Date Verified</div>'
+    + '</td>'
+    + '</tr>'
+    + '</table>'
+
+    + '<table class="footer-table" border="0" cellpadding="0" cellspacing="0" style="margin-top: 20px;">'
+    + '<tr>'
+    + '<td>American Hairline Pvt. Ltd. &bull; Confidential Order Record</td>'
+    + '<td align="right">' + esc(orderNum) + ' &bull; Page 3 of 3</td>'
+    + '</tr>'
+    + '</table>'
+    + '</div>' // end page 3
+
     + '</body></html>';
 
   return html;
