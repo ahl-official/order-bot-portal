@@ -95,9 +95,11 @@ module.exports = async (req, res) => {
     }
 
     // Always provide live printable PDF route as direct updated URL
-    const livePdfUrl = `/api/pdf?orderNumber=${encodeURIComponent(orderNumber)}`;
-    if (!updatedPdfUrl || updatedPdfUrl.includes('drive.google.com/file/d//view')) {
-      updatedPdfUrl = livePdfUrl;
+    const host = req.headers['host'] || 'order-bot-portal.vercel.app';
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const fullLivePdfUrl = `${proto}://${host}/api/pdf?orderNumber=${encodeURIComponent(orderNumber)}`;
+    if (!updatedPdfUrl || updatedPdfUrl.includes('drive.google.com/file/d//view') || updatedPdfUrl.includes('1l_4rGmkF74zgiRAONxRWEacmRqPzxHh2')) {
+      updatedPdfUrl = fullLivePdfUrl;
     }
     orderData.pdfUrl = updatedPdfUrl;
     await updateOrderRow(existing.rowIndex, { pdfUrl: updatedPdfUrl });

@@ -235,33 +235,20 @@ async function syncPdfToDrive(orderData) {
     const existingFile = searchRes.data?.files?.[0];
 
     if (existingFile) {
-      // Update existing file content
+      // Attempt to update existing file content
       const uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`;
-      await requestGoogle(uploadUrl, {
+      const patchRes = await requestGoogle(uploadUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'text/html' },
         body: htmlContent
       });
-      return existingFile.webViewLink || `https://drive.google.com/file/d/${existingFile.id}/view`;
-    } else {
-      // Create new file
-      const createRes = await requestGoogle('https://www.googleapis.com/drive/v3/files', {
-        method: 'POST',
-        body: {
-          name: `${orderNumber}.html`,
-          parents: [rootFolderId]
-        }
-      });
-      if (createRes.data?.id) {
-        const fileId = createRes.data.id;
-        await requestGoogle(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'text/html' },
-          body: htmlContent
-        });
-        return `https://drive.google.com/file/d/${fileId}/view`;
+      // Only return Drive link if Google actually accepted the content (not 403 quota error)
+      if (patchRes && (patchRes.status === 200 || patchRes.status === 201)) {
+        return existingFile.webViewLink || `https://drive.google.com/file/d/${existingFile.id}/view`;
       }
+      return null;
     }
+    return null;
   } catch (err) {
     console.error('Error syncing PDF to Drive:', err);
     return null;
