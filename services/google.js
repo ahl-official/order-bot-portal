@@ -264,7 +264,9 @@ async function lookupOrder(query) {
           let v = row[colIdx] || '';
           if (key === 'contactNo') {
             v = String(v).replace(/\.0+$/, '').replace(/\D/g, '').slice(-10);
-          } else if (['totalBillAmount', 'advancePaid', 'balancePayable', 'unitCost', 'noOfUnits', 'rushOrderCharges'].includes(key)) {
+          } else if (['totalBillAmount', 'advancePaid', 'balancePayable', 'unitCost', 'rushOrderCharges', 'gstAmountCharged'].includes(key)) {
+            v = normalizeSpokenAmount(v);
+          } else if (key === 'noOfUnits') {
             v = String(v).replace(/\.0+$/, '').trim();
           }
           orderData[key] = v;
@@ -323,6 +325,27 @@ async function updateOrderRow(rowIndex, updatedOrderData) {
 
   clearCache();
   return putRes.status === 200;
+}
+
+function normalizeSpokenAmount(val) {
+  if (val === undefined || val === null) return '0';
+  let str = String(val).trim();
+  if (/^(none|nil|zero|no|n\/a)$/i.test(str)) return '0';
+
+  // Fix voice typing dot: "79.60" -> 7960, "79.6" -> 7960
+  const twoByTwo = str.match(/^(\d{2})\.(\d{1,2})$/);
+  if (twoByTwo) {
+    const p1 = parseInt(twoByTwo[1], 10);
+    let p2 = twoByTwo[2];
+    if (p2.length === 1) p2 = p2 + '0';
+    return String(p1 * 100 + parseInt(p2, 10));
+  }
+  // Fix thousands dot: "51.920" -> 51920, "25.000" -> 25000
+  const thousandsDot = str.match(/^(\d{1,3})\.(\d{3})$/);
+  if (thousandsDot) {
+    return String(thousandsDot[1] + thousandsDot[2]);
+  }
+  return str.replace(/\.0+$/, '').trim() || '0';
 }
 
 /**
@@ -395,11 +418,11 @@ async function getAllOrders(options = {}) {
       deliveryDate: String(r[cDeliveryDate] || '').trim(),
       existingWearer: String(r[cWearer] || '').trim(),
       branch: String(r[cBranch] || '').trim(),
-      totalBillAmount: cleanNum(r[cTotal]) || '0',
-      unitCost: cleanNum(cUnitCost !== -1 ? r[cUnitCost] : '') || '0',
+      totalBillAmount: normalizeSpokenAmount(r[cTotal]),
+      unitCost: normalizeSpokenAmount(cUnitCost !== -1 ? r[cUnitCost] : ''),
       noOfUnits: cleanNum(cUnits !== -1 ? r[cUnits] : '') || '1',
-      advancePaid: cleanNum(r[cAdvance]) || '0',
-      balancePayable: cleanNum(r[cBalance]) || '0',
+      advancePaid: normalizeSpokenAmount(r[cAdvance]),
+      balancePayable: normalizeSpokenAmount(r[cBalance]),
       paymentDoneBy: String(r[cPaymentDoneBy] || '').trim(),
       size: String(r[cSize] || '').trim(),
       baseType: String(r[cBaseType] || '').trim(),

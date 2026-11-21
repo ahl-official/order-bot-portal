@@ -2,6 +2,27 @@ const { lookupOrder, updateOrderRow, logAudit } = require('../services/google');
 const { syncPdfToDrive } = require('../services/pdfBuilder');
 const { sendWhatsAppNotification } = require('../services/whatsapp');
 
+function normalizeSpokenAmount(val) {
+  if (val === undefined || val === null) return '';
+  let str = String(val).trim();
+  if (/^(none|nil|zero|no|n\/a)$/i.test(str)) return '0';
+
+  // Fix voice dictation dots like "79.60" -> 7960, "79.6" -> 7960
+  const twoByTwo = str.match(/^(\d{2})\.(\d{1,2})$/);
+  if (twoByTwo) {
+    const p1 = parseInt(twoByTwo[1], 10);
+    let p2 = twoByTwo[2];
+    if (p2.length === 1) p2 = p2 + '0';
+    return String(p1 * 100 + parseInt(p2, 10));
+  }
+  // Fix thousands dot separator like "51.920" -> 51920, "25.000" -> 25000
+  const thousandsDot = str.match(/^(\d{1,3})\.(\d{3})$/);
+  if (thousandsDot) {
+    return String(thousandsDot[1] + thousandsDot[2]);
+  }
+  return str.replace(/\.0+$/, '').trim();
+}
+
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,7 +54,7 @@ module.exports = async (req, res) => {
     const numericKeys = ['totalBillAmount', 'advancePaid', 'balancePayable', 'unitCost', 'noOfUnits', 'rushOrderCharges', 'gstAmountCharged'];
     for (const nk of numericKeys) {
       if (orderData[nk] !== undefined && orderData[nk] !== null) {
-        orderData[nk] = String(orderData[nk]).replace(/\.0+$/, '').trim();
+        orderData[nk] = normalizeSpokenAmount(orderData[nk]);
       }
     }
     // Auto-calculate unitCost if missing
