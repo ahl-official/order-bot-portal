@@ -20,6 +20,15 @@ function buildOrderHtml(d) {
     return Number.isFinite(n) ? n.toLocaleString('en-IN') : esc(x);
   };
 
+  function getDriveDirectImg(url) {
+    if (!url) return '';
+    const m1 = String(url).match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (m1) return 'https://lh3.googleusercontent.com/d/' + m1[1];
+    const m2 = String(url).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1];
+    return url;
+  }
+
   const mediaFields = [
     ['Front photo', 'uploadClientPhotoFront', 'Upload Client Photo - Front'],
     ['Top photo', 'uploadClientPhotoTop', 'Upload Client Photo - Top'],
@@ -34,7 +43,7 @@ function buildOrderHtml(d) {
   const activePhotos = mediaFields.map(([label, k1, k2]) => {
     const originalUrl = String(d[k1] || d[k2] || '').trim();
     if (!originalUrl) return null;
-    return { label, url: originalUrl };
+    return { label, url: getDriveDirectImg(originalUrl) };
   }).filter(Boolean);
 
   let photoTableHtml = '';
@@ -45,10 +54,10 @@ function buildOrderHtml(d) {
       const chunk = activePhotos.slice(i, i + colsPerRow);
       let cells = '';
       chunk.forEach(photo => {
-        const imgTag = '<img src="' + photo.url + '" width="115" height="115" style="width:115px;height:115px;object-fit:cover;border:none;display:block;margin:0 auto;" />';
+        const imgTag = '<img src="' + photo.url + '" width="115" height="115" style="width:115px;height:115px;object-fit:cover;border:1px solid #cbd5e1;border-radius:4px;display:block;margin:0 auto;" onerror="this.style.display=\'none\';" />';
         cells += '<td align="center" style="width:25%;vertical-align:top;padding:4px 3px;border:none;">'
           + imgTag
-          + '<div style="font-size:8pt;font-weight:bold;margin-top:3px;color:#000;">' + esc(photo.label) + '</div>'
+          + '<div style="font-size:7.5pt;font-weight:bold;margin-top:3px;color:#1e293b;">' + esc(photo.label) + '</div>'
           + '</td>';
       });
       for (let j = chunk.length; j < colsPerRow; j++) {
@@ -58,29 +67,42 @@ function buildOrderHtml(d) {
     }
     photoTableHtml = '<table border="0" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:6px;border:none;">' + rowsHtml + '</table>';
   } else {
-    photoTableHtml = '<p style="font-size:8.5pt;margin:6px 0;">No photos attached.</p>';
+    photoTableHtml = '<p style="font-size:8pt;margin:6px 0;color:#64748b;">No client photos attached.</p>';
   }
 
   const html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
     + '<title>Order Form - ' + esc(orderNum) + '</title>'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
     + '<style>'
-    + '@page { size: A4; margin: 10mm 15mm 10mm 15mm; }'
-    + '* { box-sizing: border-box; }'
-    + 'body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.18; color: #000; margin: 0; padding: 0; background: #fff; }'
+    + '@page { size: A4 portrait; margin: 0; }'
+    + '* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }'
+    + 'html, body { margin: 0; padding: 0; background: #525659; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.18; color: #000; }'
+    + '.a4-container { display: flex; flex-direction: column; align-items: center; padding: 24px 0 40px 0; gap: 24px; }'
+    + '.a4-page { width: 210mm; min-height: 297mm; height: 297mm; background: #ffffff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); padding: 11mm 15mm 11mm 15mm; position: relative; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }'
+    + '.page-content { flex: 1; display: flex; flex-direction: column; }'
+    + '.page-footer { border-top: 1px solid #cbd5e1; padding-top: 4px; margin-top: 4px; font-size: 7.5pt; color: #64748b; display: flex; justify-content: space-between; align-items: center; }'
     + 'table, tr, td, th { border: none !important; border-width: 0 !important; outline: none !important; }'
-    + '.title { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 4px 0; }'
-    + '.bar-blue { border-top: 1.5px solid #2b6cb0; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; font-weight: bold; font-size: 9pt; padding: 1.5px 0; margin: 4px 0 2px 0; }'
-    + '.bar-red { border-top: 1.5px solid #cc0000; border-bottom: 1.5px solid #cc0000; color: #cc0000; font-weight: bold; font-size: 9pt; padding: 1.5px 0; margin: 4px 0 2px 0; }'
+    + '.title { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 4px 0; letter-spacing: 0.5px; text-transform: uppercase; color: #0f172a; }'
+    + '.bar-blue { border-top: 1.5px solid #2b6cb0; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; font-weight: bold; font-size: 8.5pt; padding: 1.5px 0; margin: 3px 0 2px 0; text-transform: uppercase; letter-spacing: 0.3px; }'
+    + '.bar-red { border-top: 1.5px solid #cc0000; border-bottom: 1.5px solid #cc0000; color: #cc0000; font-weight: bold; font-size: 8.5pt; padding: 1.5px 0; margin: 3px 0 2px 0; text-transform: uppercase; letter-spacing: 0.3px; }'
     + '.table-data { width: 100%; border-collapse: collapse; margin-bottom: 2px; border: none !important; }'
-    + '.table-data td { padding: 0.5px 0; font-size: 8.5pt; font-weight: bold; vertical-align: top; line-height: 1.15; border: none !important; }'
-    + '.table-data td.lbl { width: 270px; color: #000; }'
+    + '.table-data td { padding: 0.5px 0; font-size: 8pt; font-weight: bold; vertical-align: top; line-height: 1.15; border: none !important; }'
+    + '.table-data td.lbl { width: 250px; color: #1e293b; }'
     + '.table-data td.val { color: #000; }'
-    + '.notes-box { padding: 2px 0; margin: 3px 0; font-size: 8.5pt; font-weight: bold; line-height: 1.15; border: none !important; }'
-    + '.double-line { border-bottom: 2px double #2b6cb0; margin: 4px 0 2px 0; }'
-    + '.page-break { page-break-before: always; break-before: page; mso-break-type: section-break; clear: both; }'
+    + '.notes-box { padding: 1.5px 0; margin: 2px 0; font-size: 8pt; font-weight: bold; line-height: 1.15; border: none !important; color: #1e293b; }'
+    + '.double-line { border-bottom: 2px double #2b6cb0; margin: 3px 0 2px 0; }'
+    + '@media print {'
+    + '  html, body { background: transparent !important; margin: 0 !important; padding: 0 !important; }'
+    + '  .a4-container { padding: 0 !important; gap: 0 !important; }'
+    + '  .a4-page { width: 210mm !important; height: 297mm !important; min-height: 297mm !important; margin: 0 !important; padding: 11mm 15mm 11mm 15mm !important; box-shadow: none !important; page-break-after: always !important; break-after: page !important; }'
+    + '  #printToolbar { display: none !important; }'
+    + '}'
     + '</style></head><body>'
+    + '<div class="a4-container">'
 
     // ==================== PAGE 1 ====================
+    + '<div class="a4-page" id="page-1">'
+    + '<div class="page-content">'
     + '<div class="title">Order Form</div>'
     + '<div class="bar-blue">Client Details</div>'
     + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
@@ -129,16 +151,23 @@ function buildOrderHtml(d) {
     + '<tr><td class="lbl">Date :</td><td class="val">' + val('emi3Date', 'Emi 3 Date') + '</td></tr>'
     + '</table>'
     + '<div class="notes-box">Notes 2: ' + val('notes2', 'Notes 2 (Payment Details)', 'None') + '</div>'
-    + '<div style="font-weight: bold; margin: 4px 0 2px 0; font-size: 8.5pt;">Client type - ' + val('clientStatus', 'Client Status', 'REGULAR') + '</div>'
+    + '<div style="font-weight: bold; margin: 3px 0 2px 0; font-size: 8pt;">Client type - ' + val('clientStatus', 'Client Status', 'REGULAR') + '</div>'
     + '<div class="double-line"></div>'
     + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Pic Taken :</td><td class="val">' + val('picTaken', 'Pic Taken') + '</td></tr>'
     + '<tr><td class="lbl">Reason :</td><td class="val">' + val('picTakenReason', 'Pic Not Taken Reason') + '</td></tr>'
     + '<tr><td class="lbl">Video Taken :</td><td class="val">' + val('videoTaken', 'Video Taken') + '</td></tr>'
     + '</table>'
+    + '</div>'
+    + '<div class="page-footer">'
+    + '<span>American Hairline &bull; Confidential Order Record</span>'
+    + '<span>' + esc(orderNum) + ' &bull; Page 1 of 3</span>'
+    + '</div>'
+    + '</div>'
 
     // ==================== PAGE 2 ====================
-    + '<hr class="page-break" style="page-break-before: always; break-before: page; border: none; margin: 0; padding: 0; height: 0;" />'
+    + '<div class="a4-page" id="page-2">'
+    + '<div class="page-content">'
     + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">Reason :</td><td class="val">' + val('videoTakenReason', 'Video Not Taken Reason') + '</td></tr>'
     + '<tr><td class="lbl">Mould Taken :</td><td class="val">' + val('mouldTaken', 'Mould Taken') + '</td></tr>'
@@ -195,9 +224,16 @@ function buildOrderHtml(d) {
     + '<tr><td class="lbl">Client Order Like :</td><td class="val">' + val('clientOrderLike', 'Client Order Like') + '</td></tr>'
     + '<tr><td class="lbl">Client Order Like (Other) :</td><td class="val">' + val('clientOrderLikeOther', 'Client Order Like Other') + '</td></tr>'
     + '</table>'
+    + '</div>'
+    + '<div class="page-footer">'
+    + '<span>American Hairline &bull; Confidential Order Record</span>'
+    + '<span>' + esc(orderNum) + ' &bull; Page 2 of 3</span>'
+    + '</div>'
+    + '</div>'
 
     // ==================== PAGE 3 ====================
-    + '<hr class="page-break" style="page-break-before: always; break-before: page; border: none; margin: 0; padding: 0; height: 0;" />'
+    + '<div class="a4-page" id="page-3">'
+    + '<div class="page-content">'
     + '<div class="notes-box">Notes 4: ' + val('notes4', 'Notes 4 (Technician)', 'None') + '</div>'
     + '<table class="table-data" border="0" cellpadding="0" cellspacing="0">'
     + '<tr><td class="lbl">As Per Date :</td><td class="val">' + val('asPerDate', 'As per Date') + '</td></tr>'
@@ -207,47 +243,55 @@ function buildOrderHtml(d) {
     + '</table>'
 
     + '<div class="bar-red">Client History</div>'
-    + '<div style="font-weight: bold; margin: 3px 0; font-size: 8.5pt;">No previous order history available.</div>'
+    + '<div style="font-weight: bold; margin: 3px 0; font-size: 8pt; color:#475569;">No previous order history available.</div>'
 
     + '<div class="bar-blue">Client Photos</div>'
-    + '<div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">Current Order #' + esc(orderNum) + ' &bull; ' + val('orderDate', 'Order Date') + '</div>'
+    + '<div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px; color:#1e293b;">Order #' + esc(orderNum) + ' &bull; ' + val('orderDate', 'Order Date') + '</div>'
     + photoTableHtml
+    + '</div>'
+    + '<div class="page-footer">'
+    + '<span>American Hairline &bull; Confidential Order Record</span>'
+    + '<span>' + esc(orderNum) + ' &bull; Page 3 of 3</span>'
+    + '</div>'
+    + '</div>'
 
+    + '</div>' // end .a4-container
     + '</body></html>';
 
   return html;
 }
 
 /**
- * Regenerates the PDF in Google Drive
+ * Searches and syncs the PDF in Google Drive
  */
 async function syncPdfToDrive(orderData) {
   try {
-    const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID || '1fkoqNh-26LdbaOxTD7kC3glmd3AtgdIc';
-    const orderNumber = orderData.orderNumber || 'AHL-ORDER';
-    const fileName = `${orderNumber}.html`;
+    const orderNumber = String(orderData.orderNumber || orderData['Order Number'] || '').trim();
+    if (!orderNumber) return null;
 
-    const htmlContent = buildOrderHtml(orderData);
+    // 1. Check if the order data already carries a valid Google Drive PDF link
+    const existingLink = orderData.pdfUrl || orderData['PDF File'];
+    if (existingLink && existingLink.includes('drive.google.com/file/d/') && !existingLink.includes('1l_4rGmkF74zgiRAONxRWEacmRqPzxHh2')) {
+      return existingLink;
+    }
 
-    // 1. Search if an existing file with this name exists in Drive
-    const q = encodeURIComponent(`name = '${orderNumber}' or name = '${fileName}' or name = '${orderNumber}.pdf'`);
-    const searchRes = await requestGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,webViewLink)`);
+    // 2. Query Drive for a real PDF matching this order number
+    const q = encodeURIComponent(`name contains '${orderNumber}' and mimeType = 'application/pdf' and trashed = false`);
+    const searchRes = await requestGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,webViewLink)`);
     const existingFile = searchRes.data?.files?.[0];
 
-    if (existingFile) {
-      // Attempt to update existing file content
-      const uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`;
-      const patchRes = await requestGoogle(uploadUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'text/html' },
-        body: htmlContent
-      });
-      // Only return Drive link if Google actually accepted the content (not 403 quota error)
-      if (patchRes && (patchRes.status === 200 || patchRes.status === 201)) {
-        return existingFile.webViewLink || `https://drive.google.com/file/d/${existingFile.id}/view`;
-      }
-      return null;
+    if (existingFile && existingFile.webViewLink) {
+      return existingFile.webViewLink;
     }
+
+    // 3. Fallback: Search for any non-trashed file containing the order number
+    const qAll = encodeURIComponent(`name contains '${orderNumber}' and trashed = false`);
+    const searchResAll = await requestGoogle(`https://www.googleapis.com/drive/v3/files?q=${qAll}&fields=files(id,name,mimeType,webViewLink)`);
+    const matched = (searchResAll.data?.files || []).find(f => f.mimeType === 'application/pdf');
+    if (matched && matched.webViewLink) {
+      return matched.webViewLink;
+    }
+
     return null;
   } catch (err) {
     console.error('Error syncing PDF to Drive:', err);

@@ -86,18 +86,23 @@ module.exports = async (req, res) => {
     // 4. Log Audit
     await logAudit(orderNumber, editorName || 'Staff', changeSummary, orderData);
 
-    // 5. Update/Regenerate PDF in Google Drive or Live PDF route
+    // 5. Preserve genuine Google Drive PDF or resolve live printable A4 form
     let updatedPdfUrl = null;
-    try {
-      updatedPdfUrl = await syncPdfToDrive(orderData);
-    } catch (driveErr) {
-      console.warn('Drive sync warning:', driveErr.message);
+    const existingPdf = existing.orderData.pdfUrl || existing.orderData['PDF File'];
+    if (existingPdf && existingPdf.includes('drive.google.com/file/d/') && !existingPdf.includes('1l_4rGmkF74zgiRAONxRWEacmRqPzxHh2')) {
+      updatedPdfUrl = existingPdf;
+    } else {
+      try {
+        updatedPdfUrl = await syncPdfToDrive(orderData);
+      } catch (driveErr) {
+        console.warn('Drive sync warning:', driveErr.message);
+      }
     }
 
-    // Always provide live printable PDF route as direct updated URL
     const host = req.headers['host'] || 'order-bot-portal.vercel.app';
     const proto = req.headers['x-forwarded-proto'] || 'https';
     const fullLivePdfUrl = `${proto}://${host}/api/pdf?orderNumber=${encodeURIComponent(orderNumber)}`;
+
     if (!updatedPdfUrl || updatedPdfUrl.includes('drive.google.com/file/d//view') || updatedPdfUrl.includes('1l_4rGmkF74zgiRAONxRWEacmRqPzxHh2')) {
       updatedPdfUrl = fullLivePdfUrl;
     }
