@@ -822,6 +822,7 @@
               <option value="Gauri">
               <option value="Rahul Singh">
               <option value="Zoya">
+              <option value="Roshani">
               <option value="Vinitt sir">
             </datalist>
             <div class="grid-2">
@@ -1252,6 +1253,7 @@
                     <option value="Gauri">Gauri</option>
                     <option value="Rahul Singh">Rahul Singh</option>
                     <option value="Zoya">Zoya</option>
+                    <option value="Roshani">Roshani</option>
                     <option value="Vinitt sir">Vinitt sir</option>
                   </select>
                 </div>
@@ -1617,7 +1619,7 @@
       const select = document.getElementById('dashConsultant');
       if (!select) return;
       const currentVal = select.value;
-      const consultants = new Set(['Pooja', 'Sejal', 'Gauri', 'Rahul Singh', 'Zoya', 'Vinitt sir']);
+      const consultants = new Set(['Pooja', 'Sejal', 'Gauri', 'Rahul Singh', 'Zoya', 'Roshani', 'Vinitt sir']);
       allOrders.forEach(o => {
         const c = (o.consultationBy || '').trim();
         if (c && c.length > 1) consultants.add(c);

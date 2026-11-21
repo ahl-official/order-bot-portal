@@ -1,5 +1,6 @@
+const https = require('https');
 const { lookupOrder, updateOrderRow, logAudit } = require('../services/google');
-const { syncPdfToDrive } = require('../services/pdfBuilder');
+const { buildOrderHtml, syncPdfToDrive } = require('../services/pdfBuilder');
 const { sendWhatsAppNotification } = require('../services/whatsapp');
 
 function normalizeSpokenAmount(val) {
@@ -86,16 +87,65 @@ module.exports = async (req, res) => {
     // 4. Log Audit
     await logAudit(orderNumber, editorName || 'Staff', changeSummary, orderData);
 
-    // 5. Preserve genuine Google Drive PDF or resolve live printable A4 form
-    let updatedPdfUrl = null;
+    // 5. Live Sync PDF to Google Drive & update Google Sheets
+    let drivePdfUrl = null;
+    try {
+      const htmlContent = buildOrderHtml(orderData);
+      const syncPayload = JSON.stringify({
+        orderNumber,
+        clientName: orderData.clientName || existing.orderData.clientName || 'Client',
+        folderId: existing.orderData['Drive Folder'] || '1fkoqNh-26LdbaOxTD7kC3glmd3AtgdIc',
+        htmlContent
+      });
+
+      const syncRes = await new Promise((resolve) => {
+        const sReq = https.request({
+          hostname: 'n8n.hairscalptradingco.com',
+          path: '/webhook/portal-sync-pdf',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(syncPayload)
+          },
+          timeout: 20000
+        }, (sRes) => {
+          let sBody = '';
+          sRes.on('data', c => sBody += c);
+          sRes.on('end', () => {
+            try {
+              resolve(JSON.parse(sBody));
+            } catch (e) {
+              resolve(null);
+            }
+          });
+        });
+        sReq.on('error', (err) => {
+          console.warn('Portal PDF Sync request error:', err.message);
+          resolve(null);
+        });
+        sReq.on('timeout', () => {
+          sReq.destroy();
+          resolve(null);
+        });
+        sReq.write(syncPayload);
+        sReq.end();
+      });
+
+      if (syncRes && syncRes.pdfUrl) {
+        drivePdfUrl = syncRes.pdfUrl;
+      }
+    } catch (syncErr) {
+      console.warn('Drive sync error:', syncErr.message);
+    }
+
     const existingPdf = existing.orderData.pdfUrl || existing.orderData['PDF File'];
-    if (existingPdf && existingPdf.includes('drive.google.com/file/d/') && !existingPdf.includes('1l_4rGmkF74zgiRAONxRWEacmRqPzxHh2')) {
-      updatedPdfUrl = existingPdf;
-    } else {
+    let updatedPdfUrl = drivePdfUrl || (existingPdf && existingPdf.includes('drive.google.com/file/d/') && !existingPdf.includes('1l_4rGmkF74zgiRAONxRWEacmRqPzxHh2') ? existingPdf : null);
+
+    if (!updatedPdfUrl) {
       try {
         updatedPdfUrl = await syncPdfToDrive(orderData);
       } catch (driveErr) {
-        console.warn('Drive sync warning:', driveErr.message);
+        console.warn('Drive lookup warning:', driveErr.message);
       }
     }
 
