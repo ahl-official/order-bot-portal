@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
       return res.status(404).send(`<h2>Error: Order ${orderNumber} not found in Google Sheets</h2>`);
     }
 
-    let html = buildOrderHtml(orderRecord.orderData);
+    let html = await buildOrderHtml(orderRecord.orderData);
 
     // Inject print toolbar and auto-print styling
     const printToolbar = `

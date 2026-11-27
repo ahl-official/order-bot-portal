@@ -556,6 +556,38 @@ async function logAudit(orderNumber, editorName, changeSummary, orderData = {}) 
   }
 }
 
+async function getDriveImageBase64(url) {
+  if (!url) return null;
+  const m = String(url).match(/\/d\/([a-zA-Z0-9_-]+)/) || String(url).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (!m) return null;
+  const fileId = m[1];
+  try {
+    const token = await getAccessToken();
+    return new Promise((resolve) => {
+      const req = https.request({
+        hostname: 'www.googleapis.com',
+        path: '/drive/v3/files/' + fileId + '?alt=media',
+        headers: { 'Authorization': 'Bearer ' + token },
+        timeout: 10000
+      }, res => {
+        if (res.statusCode !== 200) return resolve(null);
+        const mime = res.headers['content-type'] || 'image/jpeg';
+        const chunks = [];
+        res.on('data', c => chunks.push(c));
+        res.on('end', () => {
+          const buf = Buffer.concat(chunks);
+          resolve('data:' + mime + ';base64,' + buf.toString('base64'));
+        });
+      });
+      req.on('error', () => resolve(null));
+      req.on('timeout', () => { req.destroy(); resolve(null); });
+      req.end();
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
 module.exports = {
   getAccessToken,
   requestGoogle,
@@ -565,6 +597,7 @@ module.exports = {
   getAuditLogs,
   logAudit,
   clearCache,
-  FIELD_TO_HEADER
+  FIELD_TO_HEADER,
+  getDriveImageBase64
 };
 

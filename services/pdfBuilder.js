@@ -1,6 +1,6 @@
-const { requestGoogle } = require('./google');
+const { requestGoogle, getDriveImageBase64 } = require('./google');
 
-function buildOrderHtml(d) {
+async function buildOrderHtml(d) {
   const orderNum = d.orderNumber || d['Order Number'] || 'AHL-XXXX';
   const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const val = (k, altKey = '', f = '') => {
@@ -30,21 +30,32 @@ function buildOrderHtml(d) {
   }
 
   const mediaFields = [
-    ['Front photo', 'uploadClientPhotoFront', 'Upload Client Photo - Front'],
-    ['Top photo', 'uploadClientPhotoTop', 'Upload Client Photo - Top'],
-    ['Left photo', 'uploadClientPhotoLeft', 'Upload Client Photo - Left'],
-    ['Right photo', 'uploadClientPhotoRight', 'Upload Client Photo - Right'],
-    ['Back photo', 'uploadClientPhotoBack', 'Upload Client Photo - Back'],
-    ['Mould picture', 'clientMouldPhoto', 'Client Mould Photo'],
-    ['Demo unit picture', 'demoPicture', 'Demo Picture'],
-    ['Client after demo', 'clientConsentFormPage1', 'Client Consent Form Page 1']
+    ['Front photo', 'photoFrontUrl', 'uploadClientPhotoFront', 'Upload Client Photo - Front'],
+    ['Top photo', 'photoTopUrl', 'uploadClientPhotoTop', 'Upload Client Photo - Top'],
+    ['Left photo', 'photoLeftUrl', 'uploadClientPhotoLeft', 'Upload Client Photo - Left'],
+    ['Right photo', 'photoRightUrl', 'uploadClientPhotoRight', 'Upload Client Photo - Right'],
+    ['Back photo', 'photoBackUrl', 'uploadClientPhotoBack', 'Upload Client Photo - Back'],
+    ['Mould picture', 'mouldPhotoUrl', 'clientMouldPhoto', 'Client Mould Photo'],
+    ['Demo unit picture', 'demoPictureUrl', 'demoPicture', 'Demo Picture'],
+    ['Client after demo', 'clientPicAfterDemoUrl', 'clientConsentFormPage1', 'Client Consent Form Page 1']
   ];
 
-  const activePhotos = mediaFields.map(([label, k1, k2]) => {
-    const originalUrl = String(d[k1] || d[k2] || '').trim();
+  const activePhotos = (await Promise.all(mediaFields.map(async ([label, ...keys]) => {
+    let originalUrl = '';
+    for (const k of keys) {
+      if (d[k] && String(d[k]).trim()) {
+        originalUrl = String(d[k]).trim();
+        break;
+      }
+    }
     if (!originalUrl) return null;
-    return { label, url: getDriveDirectImg(originalUrl) };
-  }).filter(Boolean);
+    let base64 = null;
+    try {
+      base64 = await getDriveImageBase64(originalUrl);
+    } catch (e) {}
+    const finalUrl = base64 || getDriveDirectImg(originalUrl);
+    return { label, url: finalUrl, originalUrl };
+  }))).filter(Boolean);
 
   let photoTableHtml = '';
   if (activePhotos.length > 0) {
@@ -68,6 +79,14 @@ function buildOrderHtml(d) {
     photoTableHtml = '<table border="0" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:6px;border:none !important;">' + rowsHtml + '</table>';
   } else {
     photoTableHtml = '<p style="font-size:9pt;margin:6px 0;">No photos attached.</p>';
+  }
+
+  const videoUrl = String(d.videoUrl || d['Upload Video (From Technician)'] || '').trim();
+  let videoHtml = '';
+  if (videoUrl) {
+    videoHtml = '<div style="margin-top:8px; padding:6px 10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:4px; font-size:8.5pt; font-weight:bold;">'
+      + '🎬 <span style="color:#0f172a;">Consultation Video :</span> <a href="' + esc(videoUrl) + '" target="_blank" style="color:#2b6cb0; text-decoration:underline; word-break:break-all;">' + esc(videoUrl) + '</a>'
+      + '</div>';
   }
 
   const html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
@@ -223,6 +242,7 @@ function buildOrderHtml(d) {
     + '<div class="bar-blue">Client Photos</div>'
     + '<div style="font-size: 8pt; font-weight: bold; margin-bottom: 4px;">Current Order #' + esc(orderNum) + ' &bull; ' + val('Order Date', 'orderDate') + '</div>'
     + photoTableHtml
+    + videoHtml
 
     + '</body></html>';
 

@@ -879,11 +879,13 @@
             <div class="grid-2">
               <div class="form-group">
                 <label>Hairline (Consultant)</label>
-                <select id="consultHairline" name="consultHairline">
+                <select id="consultHairline" name="consultHairline" onchange="handleConsultHairlineChange()">
                   <option value="Covered">Covered</option>
                   <option value="Brush Back">Brush Back</option>
                   <option value="Exposed">Exposed</option>
+                  <option value="Other">Other</option>
                 </select>
+                <input type="text" id="consultHairlineOther" name="consultHairlineOther" placeholder="Specify Hairline (e.g. Partially Exposed)" style="display:none; margin-top:8px;">
               </div>
               <div class="form-group">
                 <label>Hairstyle</label>
@@ -1260,6 +1262,16 @@
               </div>
             </div>
 
+            <!-- Visual Media & Video Gallery Display -->
+            <div id="mediaGalleryContainer" style="margin-bottom:20px; padding:16px; background:#f8fafc; border:1px solid var(--border); border-radius:8px;">
+              <h4 style="font-size:14px; font-weight:700; margin-bottom:12px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                📸 Client Photos &amp; Video Preview Gallery
+              </h4>
+              <div id="mediaThumbnailsGrid" style="display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start;">
+                <p style="font-size:12px; color:var(--text-muted); margin:0;">No photos or video attached to this order yet.</p>
+              </div>
+            </div>
+
             <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">
               Google Drive links and non-capture reasons recorded by staff:
             </p>
@@ -1267,37 +1279,37 @@
             <div class="grid-2">
               <div class="form-group">
                 <label>Front Photo Link</label>
-                <input type="url" id="photoFrontUrl" name="photoFrontUrl" placeholder="https://drive.google.com/...">
+                <input type="url" id="photoFrontUrl" name="photoFrontUrl" placeholder="https://drive.google.com/..." oninput="renderMediaPreviews()">
               </div>
               <div class="form-group">
                 <label>Top Photo Link</label>
-                <input type="url" id="photoTopUrl" name="photoTopUrl" placeholder="https://drive.google.com/...">
+                <input type="url" id="photoTopUrl" name="photoTopUrl" placeholder="https://drive.google.com/..." oninput="renderMediaPreviews()">
               </div>
             </div>
 
             <div class="grid-3">
               <div class="form-group">
                 <label>Left Side Photo</label>
-                <input type="url" id="photoLeftUrl" name="photoLeftUrl">
+                <input type="url" id="photoLeftUrl" name="photoLeftUrl" oninput="renderMediaPreviews()">
               </div>
               <div class="form-group">
                 <label>Right Side Photo</label>
-                <input type="url" id="photoRightUrl" name="photoRightUrl">
+                <input type="url" id="photoRightUrl" name="photoRightUrl" oninput="renderMediaPreviews()">
               </div>
               <div class="form-group">
                 <label>Back Photo</label>
-                <input type="url" id="photoBackUrl" name="photoBackUrl">
+                <input type="url" id="photoBackUrl" name="photoBackUrl" oninput="renderMediaPreviews()">
               </div>
             </div>
 
             <div class="grid-2">
               <div class="form-group">
                 <label>Consultation Video Link</label>
-                <input type="url" id="videoUrl" name="videoUrl">
+                <input type="url" id="videoUrl" name="videoUrl" oninput="renderMediaPreviews()">
               </div>
               <div class="form-group">
                 <label>Mould Photo Link</label>
-                <input type="url" id="mouldPhotoUrl" name="mouldPhotoUrl">
+                <input type="url" id="mouldPhotoUrl" name="mouldPhotoUrl" oninput="renderMediaPreviews()">
               </div>
             </div>
 
@@ -1920,9 +1932,33 @@
         const sel = document.getElementById('formFilledBySelect');
         if (sel) sel.value = data.formFilledBy;
       }
+
+      // Hairline (Consultant) selection & custom 'Other' mapping
+      if (data.consultHairline !== undefined) {
+        const sel = document.getElementById('consultHairline');
+        const otherInput = document.getElementById('consultHairlineOther');
+        const hVal = String(data.consultHairline || '').trim();
+        if (['Covered', 'Brush Back', 'Exposed'].includes(hVal)) {
+          if (sel) sel.value = hVal;
+          if (otherInput) { otherInput.style.display = 'none'; otherInput.value = ''; }
+        } else if (hVal) {
+          if (sel) sel.value = 'Other';
+          if (otherInput) {
+            otherInput.value = hVal.replace(/^other\s*[:\-]?\s*/i, '');
+            otherInput.style.display = 'block';
+          }
+        } else {
+          if (sel) sel.value = 'Covered';
+          if (otherInput) { otherInput.style.display = 'none'; otherInput.value = ''; }
+        }
+      }
+
       document.getElementById('bannerOrderNumber').innerText = data.orderNumber || 'AHL-XXXX';
       document.getElementById('bannerClientName').innerText = data.clientName || 'Unnamed';
       document.getElementById('bannerBranch').innerText = data.branch ? `(${data.branch})` : '';
+
+      // Render Visual Media Thumbnails & Video card
+      renderMediaPreviews();
 
       // Live Printable PDF link
       const liveLink = document.getElementById('livePdfLink');
@@ -1991,6 +2027,82 @@
       document.getElementById('pinModal').style.display = 'none';
     }
 
+    function handleConsultHairlineChange() {
+      const sel = document.getElementById('consultHairline');
+      const otherInput = document.getElementById('consultHairlineOther');
+      if (sel && otherInput) {
+        if (sel.value === 'Other') {
+          otherInput.style.display = 'block';
+          otherInput.focus();
+        } else {
+          otherInput.style.display = 'none';
+        }
+      }
+    }
+
+    function getDriveIdFromUrl(url) {
+      if (!url) return null;
+      const m = String(url).match(/\/d\/([a-zA-Z0-9_-]+)/) || String(url).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : null;
+    }
+
+    function renderMediaPreviews() {
+      const container = document.getElementById('mediaThumbnailsGrid');
+      if (!container) return;
+
+      const mediaItems = [
+        { label: 'Front Photo', id: 'photoFrontUrl' },
+        { label: 'Top Photo', id: 'photoTopUrl' },
+        { label: 'Left Side Photo', id: 'photoLeftUrl' },
+        { label: 'Right Side Photo', id: 'photoRightUrl' },
+        { label: 'Back Photo', id: 'photoBackUrl' },
+        { label: 'Mould Photo', id: 'mouldPhotoUrl' }
+      ];
+
+      let cardsHtml = '';
+      let hasAnyMedia = false;
+
+      mediaItems.forEach(item => {
+        const input = document.getElementById(item.id);
+        const url = (input ? input.value : '').trim();
+        if (url) {
+          hasAnyMedia = true;
+          const fileId = getDriveIdFromUrl(url);
+          const thumbUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : url;
+          cardsHtml += `
+            <div style="width:130px; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:#fff; text-align:center; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <a href="${url}" target="_blank" title="Click to view full image in Google Drive" style="display:block; text-decoration:none;">
+                <img src="${thumbUrl}" style="width:114px; height:114px; object-fit:cover; border-radius:4px; display:block; margin:0 auto; background:#f1f5f9;" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%2250%%22 x=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2212%22 fill=%22%2394a3b8%22>Preview</text></svg>';">
+              </a>
+              <div style="font-size:11px; font-weight:700; margin-top:6px; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.label}</div>
+              <a href="${url}" target="_blank" class="btn btn-outline btn-xs" style="margin-top:6px; font-size:10px; padding:3px 6px; display:inline-block; text-decoration:none;">🔗 View Drive</a>
+            </div>
+          `;
+        }
+      });
+
+      const videoInput = document.getElementById('videoUrl');
+      const videoUrl = (videoInput ? videoInput.value : '').trim();
+      if (videoUrl) {
+        hasAnyMedia = true;
+        cardsHtml += `
+          <div style="flex:1; min-width:240px; border:1px solid #bfdbfe; border-radius:6px; background:#eff6ff; padding:12px; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:13px; font-weight:700; color:#1e40af; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+              🎬 Consultation Video Attached
+            </div>
+            <div style="font-size:11px; color:#2563eb; margin-bottom:10px; word-break:break-all; font-family:monospace;">${videoUrl}</div>
+            <a href="${videoUrl}" target="_blank" class="btn btn-primary btn-sm" style="align-self:flex-start; text-decoration:none; font-size:11px; padding:6px 14px;">▶️ Open Video in Google Drive</a>
+          </div>
+        `;
+      }
+
+      if (!hasAnyMedia) {
+        container.innerHTML = '<p style="font-size:12px; color:var(--text-muted); margin:0;">No photos or video attached to this order yet. Enter Google Drive URLs below to attach media.</p>';
+      } else {
+        container.innerHTML = cardsHtml;
+      }
+    }
+
     async function confirmSaveWithPin() {
       const pin = document.getElementById('staffPinInput').value.trim();
       const editor = document.getElementById('editorNameInput').value.trim() || 'Roshani';
@@ -2002,11 +2114,16 @@
       document.getElementById('saveStatusIndicator').innerText = 'Saving & Syncing Drive PDF...';
 
       const formData = new FormData(document.getElementById('orderForm'));
+      const orderData = Object.fromEntries(formData.entries());
+      if (orderData.consultHairline === 'Other') {
+        const customH = (document.getElementById('consultHairlineOther').value || '').trim();
+        orderData.consultHairline = customH || 'Other';
+      }
       const payload = {
         pin,
         editorName: editor,
         timestamp: new Date().toISOString(),
-        orderData: Object.fromEntries(formData.entries())
+        orderData
       };
 
       try {

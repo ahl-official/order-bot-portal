@@ -90,7 +90,7 @@ module.exports = async (req, res) => {
     // 5. Live Sync PDF to Google Drive & update Google Sheets
     let drivePdfUrl = null;
     try {
-      const htmlContent = buildOrderHtml(orderData);
+      const htmlContent = await buildOrderHtml(orderData);
       const syncPayload = JSON.stringify({
         orderNumber,
         clientName: orderData.clientName || existing.orderData.clientName || 'Client',
